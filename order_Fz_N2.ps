@@ -1,0 +1,1951 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%LanguageLevel: 2
+%%DocumentData: Clean8Bit
+%%Pages: 1
+% $Id: sigmap.pps 1762 2008-03-14 13:15:30Z rsmies $
+
+%%Creator: xavr 2640
+%%CreationDate: Thu Dec  2 14:19:43 2021
+%%Title: /DATA3/BLB_EXP_201705_IluAg/Analysis/Eeprobe/experimento_IA/cfg
+%%For: ssturm - 
+
+%%Orientation: Landscape
+%%BoundingBox: 0 0 383 567
+%%DocumentNeededResources: font Fixed Helvetica
+
+%%EndComments
+
+%%BeginProlog
+200 dict begin
+
+/InitPageGS {
+  72 25.4 div dup scale                  % set gs units to mm
+  PageX PageY translate                  % handle paper size/orientation
+  PageAngle   rotate
+  0 setlinecap
+  true setstrokeadjust
+} def
+
+
+% the "Print Current View" option - clip the visible region
+% and fit it centered into the given physical paper sheet extents
+/InitViewGS {
+  % undo the "shift to upper edge" in portrait orientation
+  PageAngle 0 eq {
+    0 PageY neg translate
+  } if
+
+  % find effective sheet size (without margins)
+  /swm SheetW PlotViewMargin 2 mul sub def
+  /shm SheetH PlotViewMargin 2 mul sub def
+  
+  % scale view to fit height or width, whichever is smaller
+  swm ViewW div shm ViewH div lt {
+    % fit width, center height
+    /vscale swm ViewW div def
+    PlotViewMargin PlotViewMargin shm ViewH vscale mul sub 2 div add translate
+  } {
+    % fit height, center width
+    /vscale shm ViewH div def
+    PlotViewMargin swm ViewW vscale mul sub 2 div add PlotViewMargin translate
+  }
+  ifelse
+  vscale dup scale
+  ViewX neg ViewY neg translate
+  ViewX ViewY ViewW ViewH rectclip
+} def
+
+/InitFieldGS {
+  /s_per_mm f_tmax f_tmin sub f_width  div def  % scale mm to diagram coords
+  /u_per_mm f_ymax f_ymin sub f_height div def
+  /mm_per_s 1.0 s_per_mm div def
+  /mm_per_u 1.0 u_per_mm div def
+  f_x f_y translate                               % locate field (in mm)
+  mm_per_s mm_per_u scale                         % set diagram scales 
+  0 f_tmin sub 0 f_ymin sub translate             % and diagram origin
+} bind def
+
+/ClipFieldGS {
+  f_tmin                                     % clip to width, 20 * height
+  f_ymin f_ymax f_ymin sub abs 10 mul sub
+  f_tmax f_tmin sub
+  f_ymax f_ymin sub abs 21 mul
+  rectclip
+} bind def
+
+% EPS file inclusion frame
+% from the Adobe PostScript Language Reference Manual
+/BeginEPSF { 
+  /b4_Inc_state save def
+  /dict_count countdictstack def
+  /op_count count 1 sub def
+  userdict begin
+  /showpage {} def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [] 0 setdash newpath
+  false setstrokeadjust false setoverprint
+} bind def
+
+/EndEPSF {
+  count op_count sub {pop} repeat
+  countdictstack dict_count sub {end} repeat
+  b4_Inc_state restore
+} bind def
+
+% fit epsf bounding box into xavr object field
+/FitEPSF {
+  % debug - outline xavr field
+  %0 0 field_w field_h rectstroke
+  %0 0 2 2 rectfill
+  
+  /bbox_w bbox_urx bbox_llx sub def
+  /bbox_h bbox_ury bbox_lly sub def
+  field_x field_y translate                     % to xavr field lower left
+  field_w 2 div field_h 2 div translate         % to xavr field center point
+  
+  % fit total x-extent of rotated bbox into xavr field width
+  field_w bbox_w bbox_ang cos abs mul bbox_h bbox_ang sin abs mul add div
+  % same for y or copy x scaling
+  bbox_fit {
+    field_h bbox_w bbox_ang sin abs mul bbox_h bbox_ang cos abs mul add div
+  } {
+    dup
+  } ifelse
+  scale
+
+  bbox_ang rotate
+  bbox_w 2 div neg bbox_h 2 div neg translate  % back from center to lower left
+  bbox_llx neg bbox_lly neg translate          % handle bbox origin
+  
+  % debug - outline EPSF bounding box in the transformed system
+  %1 0 0 rgb2cmyk 
+  %bbox_llx bbox_lly bbox_w bbox_h rectstroke
+  %bbox_llx bbox_lly 10 10 rectfill
+} bind def
+
+% to ease subsequent processing, only the CMYK ad GRAY color models
+% are used, no RGB
+% xavr supplies RGB components but they are transformed into its
+% complementary CMYK components here
+/rgb2cmyk {
+  /_blue  exch def
+  /_green exch def
+  /_red   exch def
+
+  _red _green add _blue add 0.0 eq {
+    0 0 0 1
+  } {
+    1 _red sub 1 _green sub 1 _blue sub 0 
+  } ifelse
+
+  setcmykcolor
+} bind def
+
+
+/MMstroke {
+  % set CTM from field coords to mm, set linewidth, restore field coords
+  s_per_mm u_per_mm scale stroke mm_per_s mm_per_u scale
+} bind def
+
+
+% decode/render the diagram traces 
+/CuGS {
+  % period t0 y0 ==> (empty)
+  translate
+  dup 1 scale /Period exch def
+  currentlinecap 1 eq { 1 setlinejoin } if 
+%  1 setlinecap
+  newpath 0 0 moveto
+} bind def
+
+/CuPath {
+  % (file) filter, (int) control -> (file) filter
+  1000 mod 0 eq {CuStroke} if         % avoid path overflow
+  dup read pop                        % preserve file, ignore status while reading
+  CodeScale mul                       % calc the real difference vector from encoding
+  CodeOffset add
+  1 exch rlineto
+} bind def
+
+/CuStroke {
+  currentpoint                        % note start point for next section
+  1 Period div 1 scale                % back to field units
+  MMstroke                            % back to mm, stroke, back to field
+  Period 1 scale                      % continue path in samples
+  moveto
+} bind def
+
+/CuDec {
+  /CodeOffset exch def
+  /CodeScale  exch def  
+  currentfile /ASCII85Decode filter
+} bind def
+
+% sensor dot plot in map objects
+% (a white filled circle, surrounded by a line in current style)
+/Sens {
+  % x y r ==> (empty)
+  0 360 arc closepath gsave 1 setgray fill grestore stroke
+} bind def
+
+/ScaleDash {
+  % linewidth dash_array ==> dash_array
+
+  /sc_array  exch def
+  /sc_factor exch def
+  /out_array sc_array length array def
+  /is_round currentlinecap 0 gt def
+
+  0 1 sc_array length 1 sub {
+    dup /sc_index exch def
+    sc_array sc_index get sc_factor mul  % scale each entry with the linewidth
+
+    is_round {                           % round/proj cap forces drawn lines to
+      sc_index 2 mod 0 eq                % be longer then given - therefore
+        { sc_factor sub                  %   shorten the drawn parts
+          dup 0.0 lt {0 exch pop} if }   %     (but avoid negative lengths)
+        { sc_factor add }                %   enlarge the empty parts
+      ifelse
+    } if
+    out_array 3 1 roll put
+  } for
+  out_array
+} bind def
+
+% was LStyleInitGS
+/LI {
+  % red green blue dashindex linewidth linecap ==> (empty)
+  gsave
+  setlinecap
+  dup
+  setlinewidth
+  exch
+  DashList exch get
+  % scale the dash pattern array if required
+  dup length 1 gt {ScaleDash} {exch pop} ifelse
+  0 setdash
+  rgb2cmyk
+} bind def
+
+% was LStyleFreeGS
+/LF {
+  grestore
+} bind def
+
+/ALIGN_CENTER 0 def
+/ALIGN_TOP    1 def
+/ALIGN_BOTTOM 2 def
+/ALIGN_RIGHT  3 def
+/ALIGN_LEFT   4 def
+
+% was TStylePlot
+/TP {
+  % text tsize tah tav x y  ==> (empty)
+  /ty exch def
+  /tx exch def
+  /tav exch def
+  /tah exch def
+  0.7 mul /tsize exch def              % ignore font descent for positioning
+  /ttext exch def
+  ttext stringwidth pop /twidth exch def
+  tah ALIGN_CENTER eq {
+    /tx tx twidth 0.5 mul sub def
+  } if
+  tah ALIGN_RIGHT eq {
+    /tx tx twidth sub def
+  } if
+  tav ALIGN_CENTER eq {
+    /ty ty tsize 0.5 mul sub def
+  } if
+  tav ALIGN_TOP eq {
+    /ty ty tsize sub def
+  } if
+  tx ty moveto ttext show
+} bind def
+
+/std2iso {
+  % font ==>  font
+  dup length dict begin
+    {1 index /FID ne {def} {pop pop} ifelse} forall
+    /Encoding ISOLatin1Encoding def
+    currentdict
+  end
+} bind def
+
+% draw gray
+/DG {
+  %   x width grayindex ==> (empty)
+
+  GrayScale exch get setgray
+  y exch height rectfill
+} bind def
+
+% time axis div
+/TD {
+  %   x ==> (empty)
+  y1 moveto 0 len rlineto
+} bind def
+
+% ampl axis div
+/AD {
+  %  y ==> (empty)
+  x1 exch moveto len 0 rlineto
+} bind def
+
+% line 
+/LS {
+  % x2, y2, x1, y1   ==>  (empty)
+  moveto lineto stroke
+} bind def
+
+/PalS {
+  % colorindex mapindex ==> (empty)
+  Pal exch get
+  exch get dup 0 get exch dup 1 get exch 2 get rgb2cmyk
+} bind def
+
+/InstitutionLogo [(EEProbe)(A.N.T. Software)] def
+/SetPos {
+  gsave translate
+} bind def
+/sBB {                                  % get bounding box of string
+  gsave
+  0 0 moveto
+  dup false charpath                    % string not removed from stack
+  flattenpath pathbbox                  % ll.x, ll.y, ur.x, ur.y  on stack
+  grestore
+} bind def
+/sH {                                   % get height of string
+  sBB
+  4 1 roll pop pop pop
+} bind def
+
+/DrawLogo {
+  11 5 translate
+  /Helvetica findfont 3 scalefont setfont
+  /logoW 0 def
+  dup {                                 % get width of longest string
+    stringwidth pop dup logoW ge {/logoW exch def} {pop} ifelse
+  } forall
+  0 logoW 2 div add 1.5 add -5 SetPos   % set coord. (0,0) at center of logo
+  1 setgray
+  logoW 2 div neg 1.5 sub -2
+  logoW 3 add 4 rectfill               % clear area
+  0 setgray
+  dup 0 get
+  dup stringwidth pop 2 div neg 0 moveto show   % print upper string centered
+  /Helvetica findfont 2.7 scalefont setfont 
+  (Z) sH /logoFh exch def pop                 % get height of lower string
+  1 get
+  dup stringwidth pop 2 div neg logoFh neg 0.7 sub moveto show     % print lower string centered
+  grestore
+} bind def
+
+/DrawFrame {
+  gsave
+  0 setgray 0.30 setlinewidth [] 0 setdash
+  frame_x frame_y translate
+
+  % => the next 2 lines may be commented out to disable the drawing of ...
+  0 0 frame_width frame_height rectstroke    % the frame around the whole diagram
+  InstitutionLogo DrawLogo                               % the institution logo
+  grestore
+} bind def
+
+/DrawFrameMPI_CNS {
+  gsave
+  12 dict begin
+  /MPItext  (A.N.T Software) def
+  /blueLW    2.5 def     % width of blue part of frame
+  /yellowLW  0.36 def    % width of yellow part
+  %isLaserPrinter {
+  %   /MPIblue   {0.5 0.5 0.5 rgb2cmyk} bind def
+  %  /MPIyellow {0.8 0.8 0.8 rgb2cmyk} bind def
+  %  currentscreen 3 -1 roll pop 150 3 1 roll setscreen
+  %} {
+    /MPIblue   {0 0 0.52 rgb2cmyk} bind def
+    /MPIyellow {1 1 0 rgb2cmyk} bind def
+  %} ifelse
+  /FontMPI1  /Times-Roman findfont 3.121 scalefont def
+  /MPIF1 {FontMPI1 setfont} bind def
+  /FontMPI2  /Times-Roman findfont 4.161 scalefont def
+  /MPIF2 {FontMPI2 setfont} bind def
+  blueLW 2 div dup frame_x add exch frame_y add translate
+  [] 0 setdash 0 setlinecap 0 setlinejoin MPIblue blueLW setlinewidth
+  0 0 frame_width blueLW sub frame_height blueLW sub rectstroke
+  MPIyellow yellowLW setlinewidth
+  yellowLW 2 div blueLW 2 div add dup
+  blueLW 2 mul yellowLW add dup frame_width exch sub exch frame_height exch sub rectstroke
+  MPIblue MPIF1 /largeChar 0 def
+  frame_width blueLW 2 div sub -5 moveto
+  MPItext length 1 sub -1 0 {
+    dup MPItext exch get 94 eq {
+      MPIF2 /largeChar 1 def pop
+    } {
+      MPItext exch 1 getinterval
+      dup stringwidth pop neg dup 0 rmoveto exch show 0 rmoveto
+      largeChar 1 eq { MPIF1 /largeChar 0 def } if
+    } ifelse
+  } for
+  grestore
+
+  % scale whole diagram to fit into the reduced inner space
+  blueLW yellowLW add dup dup translate
+  2 mul frame_width div 1 sub neg dup scale
+
+  end
+} bind def
+
+
+% arrow object plot method
+
+/AS {
+  % x2, y2, x1, y1, len, ang   ==>  (empty)
+
+  /arr_ang exch def
+  /arr_len exch def
+  /arr_y1  exch def
+  /arr_x1  exch def
+  /arr_y2  exch def
+  /arr_x2  exch def
+  
+  % calc vector length, angle, arrow width from passed params
+  /arr_totlen 
+    arr_x2 arr_x1 sub dup mul 
+    arr_y2 arr_y1 sub dup mul add sqrt 
+  def
+  /arr_sinphi
+    arr_y2 arr_y1 sub arr_totlen div
+  def
+  /arr_cosphi
+    arr_x2 arr_x1 sub arr_totlen div
+  def
+  /arr_h 
+    arr_len arr_ang 2.0 div dup sin exch cos div mul
+  def
+  
+  % substract arrow head length from linelength and draw the shortened line
+  arr_x1 arr_y1 moveto
+  arr_totlen arr_len 0.99 mul sub arr_cosphi mul
+  arr_totlen arr_len 0.99 mul sub arr_sinphi mul
+  rlineto stroke
+  
+  % calc and draw the arrow head triangle
+  arr_x2 arr_y2 moveto
+  arr_len arr_cosphi neg mul arr_h arr_sinphi neg mul sub arr_x2 add
+  arr_len arr_sinphi neg mul arr_h arr_cosphi neg mul add arr_y2 add
+  lineto
+  /arr_h arr_h neg def
+  arr_len arr_cosphi neg mul arr_h arr_sinphi neg mul sub arr_x2 add
+  arr_len arr_sinphi neg mul arr_h arr_cosphi neg mul add arr_y2 add
+  lineto fill
+  
+} bind def
+
+% obsolete arrow functions for PostScript hackers
+% replaced by xavr's arrow object (see above) which is implemented 
+% without "rotate" since some including appications cannot 
+% handle "odd" rotation angles
+
+/Arrow {  
+%   x0 y0 x1 y1 half_linewidth half_headwidth headlength ==> (empty)
+
+        13 dict begin
+        /Headlength exch def
+        /Halfheadthickness exch 2 div def
+        /Halfthickness exch 2 div def
+        /Tipy exch def
+        /Tipx exch def
+        /Taily exch def
+        /Tailx exch def
+        /Dx Tipx Tailx sub def
+        /Dy Tipy Taily sub def
+        /Arrowlength Dx Dx mul Dy Dy mul add sqrt def
+        /Angle Dy Dx atan def
+        /Base Arrowlength Headlength sub def
+        /Savematrix matrix currentmatrix def
+        
+        Tailx Taily translate
+        Angle rotate
+        0 Halfthickness neg moveto
+        Base Halfthickness neg
+        lineto
+        Base Halfheadthickness
+        neg lineto
+        Arrowlength 0 lineto
+        Base Halfheadthickness lineto
+        Base Halfthickness lineto
+        0 Halfthickness lineto
+        closepath
+        
+        Savematrix setmatrix
+        end
+} bind def
+
+/FilledArrow {
+  gsave
+  0 setlinewidth newpath Arrow fill
+  grestore
+} bind def
+
+%%EndProlog
+
+% -------------------------------------------------------------------
+%%BeginSetup
+
+
+% prepare page extents
+/PlotView 0 def
+/PageX 135.00 def
+/PageY 0.00 def
+/PageAngle 90.00 def
+
+% prepare fonts (ISO-Latin1 encoding + scaling
+%%IncludeResource: font Fixed
+%%IncludeResource: font Helvetica
+/Fixed findfont 2.00 scalefont std2iso /CF0 exch definefont pop
+/Helvetica findfont 4.00 scalefont std2iso /CF1 exch definefont pop
+/Helvetica findfont 5.00 scalefont std2iso /CF2 exch definefont pop
+/Helvetica findfont 3.00 scalefont std2iso /CF3 exch definefont pop
+/Helvetica findfont 1.20 scalefont std2iso /CF4 exch definefont pop
+/Helvetica findfont 2.00 scalefont std2iso /CF5 exch definefont pop
+/Helvetica findfont 1.00 scalefont std2iso /CF6 exch definefont pop
+/Helvetica findfont 1.50 scalefont std2iso /CF7 exch definefont pop
+
+/DashList [
+[]
+[1.00 0.80 ]
+[4.00 1.00 ]
+[4.00 1.00 1.00 1.00 ]
+[4.00 1.00 1.00 1.00 1.00 1.00 ]
+[8.00 1.00 ]
+[8.00 1.00 4.00 1.00 ]
+[]
+[]
+[]
+] def
+
+/Pal [
+[
+[0.000 0.000 1.000]
+[0.049 0.049 1.000]
+[0.098 0.098 1.000]
+[0.146 0.146 1.000]
+[0.195 0.195 1.000]
+[0.244 0.244 1.000]
+[0.293 0.293 1.000]
+[0.341 0.341 1.000]
+[0.390 0.390 1.000]
+[0.439 0.439 1.000]
+[0.488 0.488 1.000]
+[0.537 0.537 1.000]
+[0.585 0.585 1.000]
+[0.634 0.634 1.000]
+[0.683 0.683 1.000]
+[0.732 0.732 1.000]
+[0.780 0.780 1.000]
+[0.829 0.829 1.000]
+[0.878 0.878 1.000]
+[0.927 0.927 1.000]
+[0.976 0.976 1.000]
+[1.000 0.976 0.976]
+[1.000 0.927 0.927]
+[1.000 0.878 0.878]
+[1.000 0.829 0.829]
+[1.000 0.780 0.780]
+[1.000 0.732 0.732]
+[1.000 0.683 0.683]
+[1.000 0.634 0.634]
+[1.000 0.585 0.585]
+[1.000 0.537 0.537]
+[1.000 0.488 0.488]
+[1.000 0.439 0.439]
+[1.000 0.390 0.390]
+[1.000 0.341 0.341]
+[1.000 0.293 0.293]
+[1.000 0.244 0.244]
+[1.000 0.195 0.195]
+[1.000 0.146 0.146]
+[1.000 0.098 0.098]
+[1.000 0.049 0.049]
+[1.000 0.000 0.000]
+]
+[
+[0.000 0.000 1.000]
+[0.095 0.095 1.000]
+[0.190 0.190 1.000]
+[0.286 0.286 1.000]
+[0.381 0.381 1.000]
+[0.476 0.476 1.000]
+[0.571 0.571 1.000]
+[0.667 0.667 1.000]
+[0.762 0.762 1.000]
+[0.857 0.857 1.000]
+[0.952 0.952 1.000]
+[1.000 0.952 0.952]
+[1.000 0.857 0.857]
+[1.000 0.762 0.762]
+[1.000 0.667 0.667]
+[1.000 0.571 0.571]
+[1.000 0.476 0.476]
+[1.000 0.381 0.381]
+[1.000 0.286 0.286]
+[1.000 0.190 0.190]
+[1.000 0.095 0.095]
+[1.000 0.000 0.000]
+]
+[
+[0.000 0.000 1.000]
+[0.049 0.049 1.000]
+[0.098 0.098 1.000]
+[0.146 0.146 1.000]
+[0.195 0.195 1.000]
+[0.244 0.244 1.000]
+[0.293 0.293 1.000]
+[0.341 0.341 1.000]
+[0.390 0.390 1.000]
+[0.439 0.439 1.000]
+[0.488 0.488 1.000]
+[0.537 0.537 1.000]
+[0.585 0.585 1.000]
+[0.634 0.634 1.000]
+[0.683 0.683 1.000]
+[0.732 0.732 1.000]
+[0.780 0.780 1.000]
+[0.829 0.829 1.000]
+[0.878 0.878 1.000]
+[0.927 0.927 1.000]
+[0.976 0.976 1.000]
+[1.000 0.976 0.976]
+[1.000 0.927 0.927]
+[1.000 0.878 0.878]
+[1.000 0.829 0.829]
+[1.000 0.780 0.780]
+[1.000 0.732 0.732]
+[1.000 0.683 0.683]
+[1.000 0.634 0.634]
+[1.000 0.585 0.585]
+[1.000 0.537 0.537]
+[1.000 0.488 0.488]
+[1.000 0.439 0.439]
+[1.000 0.390 0.390]
+[1.000 0.341 0.341]
+[1.000 0.293 0.293]
+[1.000 0.244 0.244]
+[1.000 0.195 0.195]
+[1.000 0.146 0.146]
+[1.000 0.098 0.098]
+[1.000 0.049 0.049]
+[1.000 0.000 0.000]
+]
+] def
+/frame_x 15.00 def /frame_y 10.00 def
+/frame_width 170.00 def /frame_height 115.00 def
+
+% significance grayscale colors
+/GrayScale [1.00 0.62 0.38 0.12] def
+
+%%EndSetup
+
+% I know, it should read %%Page: 1 1 or so, but my favourite previewer
+% is confused then. Strange.
+%%Page: 1
+%%BeginPageSetup
+InitPageGS
+PlotView 1 eq {
+  InitViewGS
+} if
+%%EndPageSetup
+
+% -------------------------------------------------------------------
+% draw the particular fields
+
+%DrawFrame
+%DrawFrameMPI_CNS
+%%BeginObject: (000 text)
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(positive) 5.00 4 2 23.00 71.00 TP
+%%EndObject
+%%BeginObject: (001 map)
+/CF5 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(0.180 .. 0.220 s) 2.00 4 2 5.00 20.00 TP
+gsave
+33.00 48.00 translate
+1.192659e+01 1.192659e+01 scale
+90 rotate
+/outline { { -3.2 -3.2 3.2 3.2 1.539 0.498
+1.591 0.000 1.539 -0.498 0.978 -1.340 -0.425 -2.309
+-1.330 -0.961 -1.539 -0.498 -1.592 0.000 -1.539 0.498 -1.329 0.962
+-0.424 2.309 0.977 1.340 
+} <0B 00 01 2B 03 0A > } cvlit def
+12 0 PalS outline ufill
+0.00 0.00 0.00 0 0.100 1 LI
+currentlinewidth 8.384629e-02 mul setlinewidth
+gsave 13 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.486 -0.616
+-1.436 -0.589 -1.249 -0.666 -1.081 -0.573 -0.839 -0.362
+-0.810 -0.343 -0.802 -0.292 -0.783 0.000 -0.797 0.070 -0.905 0.259
+-1.050 0.441 -1.100 0.564 -1.101 0.726 -1.108 0.860 -1.136 0.991
+-1.147 1.158 -1.218 1.128 -0.424 2.309 0.977 1.340 1.539 0.498
+1.591 0.000 1.539 -0.498 0.978 -1.340 -0.425 -2.309 -1.330 -0.961
+-1.486 -0.616 
+} <0B 00 01 39 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 13 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.452 0.691
+-1.416 0.608 -1.376 0.502 -1.468 0.395 -1.581 0.101
+-1.539 0.498 -1.452 0.691 
+} <0B 00 01 26 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 14 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.843 0.688
+-0.843 0.697 -0.851 0.829 -0.870 1.023 -0.869 1.035
+-0.912 1.323 -0.919 1.372 -0.933 1.417 -1.059 1.365 -0.424 2.309
+0.977 1.340 1.539 0.498 1.591 0.000 1.539 -0.498 0.978 -1.340
+-0.425 -2.309 -1.208 -1.142 -1.002 -1.313 -0.967 -1.303 -0.808 -1.058
+-0.794 -0.986 -0.755 -0.714 -0.777 -0.658 -0.696 -0.363 -0.724 -0.281
+-0.706 0.000 -0.773 0.323 -0.771 0.354 -0.826 0.647 
+} <0B 00 01 3C 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 15 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.698 1.102
+-0.723 1.272 -0.752 1.462 -0.805 1.641 -0.900 1.602
+-0.424 2.309 0.977 1.340 1.539 0.498 1.591 0.000 1.539 -0.498
+0.978 -1.340 -0.425 -2.309 -1.035 -1.400 -0.861 -1.545 -0.811 -1.430
+-0.708 -1.268 -0.621 -1.133 -0.569 -0.876 -0.554 -0.767 -0.636 -0.561
+-0.585 -0.378 -0.642 -0.211 -0.629 0.000 -0.679 0.242 -0.669 0.367
+-0.716 0.617 -0.690 0.732 -0.711 0.945 
+} <0B 00 01 3B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 16 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.527 1.170
+-0.534 1.222 -0.584 1.553 -0.678 1.865 -0.740 1.838
+-0.424 2.309 0.977 1.340 1.539 0.498 1.591 0.000 1.539 -0.498
+0.978 -1.340 -0.425 -2.309 -0.861 -1.659 -0.737 -1.762 -0.635 -1.525
+-0.462 -1.252 -0.440 -1.201 -0.441 -1.190 -0.385 -0.805 -0.396 -0.782
+-0.414 -0.667 -0.494 -0.464 -0.475 -0.392 -0.561 -0.141 -0.552 0.000
+-0.585 0.162 -0.566 0.380 -0.596 0.534 -0.542 0.770 -0.552 0.868
+
+} <0B 00 01 3D 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 17 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.464 0.394
+-0.475 0.452 -0.416 0.717 -0.405 0.790 -0.399 0.804
+-0.386 1.147 -0.371 1.210 -0.420 1.526 -0.420 1.605 -0.482 1.862
+-0.550 2.088 -0.581 2.075 -0.424 2.309 0.977 1.340 1.539 0.498
+1.591 0.000 1.539 -0.498 0.978 -1.340 -0.425 -2.309 -0.688 -1.917
+-0.613 -1.979 -0.502 -1.721 -0.469 -1.596 -0.457 -1.548 -0.315 -1.217
+-0.324 -1.096 -0.283 -0.814 -0.328 -0.719 -0.375 -0.403 -0.379 -0.378
+-0.402 -0.297 -0.479 -0.070 -0.475 0.000 -0.492 0.081 
+} <0B 00 01 41 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 18 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.398 0.000
+-0.398 0.000 -0.398 -0.000 -0.310 -0.309 -0.297 -0.406
+-0.260 -0.657 -0.181 -0.822 -0.206 -1.003 -0.190 -1.232 -0.276 -1.432
+-0.324 -1.621 -0.451 -2.108 -0.489 -2.196 -0.514 -2.175 -0.425 -2.309
+0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498 0.977 1.340
+-0.419 2.305 -0.420 2.306 -0.421 2.304 -0.259 1.632 -0.258 1.422
+-0.228 1.228 -0.269 1.053 -0.278 0.814 -0.320 0.711 -0.364 0.403
+-0.370 0.369 -0.398 0.000 -0.398 0.000 
+} <0B 00 01 40 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 19 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.065 -1.248
+-0.094 -1.316 -0.179 -1.645 -0.305 -2.131 -0.316 -2.226
+-0.286 -2.214 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+0.977 1.340 0.000 2.015 -0.075 2.041 -0.158 1.910 -0.097 1.659
+-0.096 1.318 -0.085 1.245 -0.152 0.959 -0.157 0.824 -0.234 0.633
+-0.267 0.407 -0.288 0.287 -0.309 0.000 -0.241 -0.241 -0.219 -0.410
+-0.192 -0.594 -0.078 -0.831 -0.089 -0.909 
+} <0B 00 01 3B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 20 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.188 1.377
+0.105 1.243 0.000 1.014 -0.035 0.865 -0.036 0.835
+-0.148 0.554 -0.169 0.411 -0.206 0.206 -0.221 0.000 -0.172 -0.172
+-0.141 -0.413 -0.123 -0.532 0.000 -0.789 0.036 -0.834 0.044 -0.872
+0.081 -1.246 0.078 -1.306 0.000 -1.539 -0.033 -1.669 -0.057 -1.760
+-0.091 -2.054 0.000 -2.015 0.978 -1.340 1.539 -0.498 1.591 0.000
+1.539 0.498 0.977 1.340 0.419 1.726 0.271 1.777 0.186 1.644
+
+} <0B 00 01 3D 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 21 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.488 1.411
+0.731 1.474 0.839 1.436 0.977 1.340 1.539 0.498
+1.591 0.000 1.539 -0.498 0.978 -1.340 0.287 -1.817 0.135 -1.881
+0.161 -1.648 0.241 -1.411 0.249 -1.225 0.228 -1.020 0.189 -0.822
+0.000 -0.584 -0.055 -0.470 -0.063 -0.416 -0.104 -0.103 -0.133 0.000
+-0.124 0.124 -0.072 0.415 -0.063 0.476 0.000 0.633 0.153 0.825
+0.305 1.082 0.365 1.211 
+} <0B 00 01 3A 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 22 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.945 0.932
+1.045 0.897 1.145 1.089 1.539 0.498 1.591 0.000
+1.539 -0.498 0.978 -1.340 0.573 -1.619 0.360 -1.709 0.371 -1.613
+0.404 -1.515 0.417 -1.204 0.413 -1.168 0.342 -0.809 0.116 -0.526
+0.036 -0.418 0.000 -0.304 -0.035 -0.035 -0.045 0.000 -0.042 0.042
+0.000 0.275 0.039 0.417 0.230 0.629 0.372 0.806 0.427 0.901
+0.556 0.869 0.867 0.932 
+} <0B 00 01 3A 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 23 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.066 0.746
+1.358 0.644 1.395 0.714 1.539 0.498 1.591 0.000
+1.539 -0.498 0.978 -1.340 0.860 -1.421 0.712 -1.483 0.797 -1.291
+0.932 -1.191 1.095 -0.856 1.060 -0.754 0.842 -0.771 0.742 -0.717
+0.414 -0.666 0.223 -0.410 0.136 -0.135 0.054 0.000 0.099 0.099
+0.185 0.411 0.414 0.665 0.726 0.722 0.837 0.744 
+} <0B 00 01 37 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 24 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.569 0.214
+1.353 0.502 1.187 0.560 1.110 0.560 0.814 0.482
+0.575 0.520 0.406 0.489 0.330 0.405 0.302 0.301 0.164 0.000
+0.403 -0.395 0.452 -0.395 0.809 -0.427 0.930 -0.396 1.076 -0.332
+1.462 -0.177 1.547 -0.419 1.591 0.000 1.569 0.214 
+} <0B 00 01 32 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 25 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.797 -0.051
+0.641 -0.210 0.400 -0.209 0.274 0.000 0.401 0.278
+0.671 0.236 0.797 0.067 0.861 0.078 0.921 0.000 0.828 -0.038
+
+} <0B 00 01 29 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 26 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.424 -0.023
+0.447 0.000 0.428 0.026 0.398 0.030 0.384 0.000
+0.398 -0.023 
+} <0B 00 01 25 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 11 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.212 0.323
+-1.325 0.190 -1.398 0.000 -1.369 -0.253 -1.210 -0.297
+-1.009 -0.165 -0.984 0.000 -1.055 0.124 
+} <0B 00 01 27 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+LF
+0.00 0.00 0.00 0 0.200 1 LI
+currentlinewidth 8.384629e-02 mul setlinewidth
+outline ustroke
+LF
+grestore
+gsave
+0.00 0.00 0.00 0 0.150 0 LI
+newpath 27.061 66.355 0.400 Sens
+newpath 38.937 66.356 0.400 Sens
+newpath 32.999 66.981 0.400 Sens
+newpath 26.972 62.579 0.400 Sens
+newpath 39.026 62.579 0.400 Sens
+newpath 32.999 57.491 0.400 Sens
+newpath 28.833 57.586 0.400 Sens
+newpath 37.162 57.577 0.400 Sens
+newpath 24.712 57.896 0.400 Sens
+newpath 41.276 57.901 0.400 Sens
+newpath 20.723 58.520 0.400 Sens
+newpath 45.267 58.513 0.400 Sens
+newpath 17.013 59.652 0.400 Sens
+newpath 48.976 59.666 0.400 Sens
+newpath 32.999 52.743 0.400 Sens
+newpath 28.207 52.805 0.400 Sens
+newpath 37.792 52.806 0.400 Sens
+newpath 23.430 52.998 0.400 Sens
+newpath 42.569 52.998 0.400 Sens
+newpath 18.692 53.398 0.400 Sens
+newpath 47.308 53.398 0.400 Sens
+newpath 14.055 54.175 0.400 Sens
+newpath 51.945 54.176 0.400 Sens
+newpath 32.999 48.000 0.400 Sens
+newpath 28.011 48.000 0.400 Sens
+newpath 37.999 48.000 0.400 Sens
+newpath 23.010 48.000 0.400 Sens
+newpath 42.988 48.000 0.400 Sens
+newpath 18.020 48.000 0.400 Sens
+newpath 47.980 48.000 0.400 Sens
+newpath 13.026 48.001 0.400 Sens
+newpath 52.974 48.001 0.400 Sens
+newpath 32.999 43.257 0.400 Sens
+newpath 28.207 43.195 0.400 Sens
+newpath 37.792 43.195 0.400 Sens
+newpath 23.430 43.003 0.400 Sens
+newpath 42.570 43.002 0.400 Sens
+newpath 18.692 42.603 0.400 Sens
+newpath 47.308 42.603 0.400 Sens
+newpath 14.054 41.826 0.400 Sens
+newpath 51.939 41.807 0.400 Sens
+newpath 32.999 38.509 0.400 Sens
+newpath 28.833 38.415 0.400 Sens
+newpath 37.162 38.423 0.400 Sens
+newpath 24.711 38.105 0.400 Sens
+newpath 41.277 38.100 0.400 Sens
+newpath 20.723 37.480 0.400 Sens
+newpath 45.267 37.487 0.400 Sens
+newpath 17.013 36.349 0.400 Sens
+newpath 48.977 36.335 0.400 Sens
+newpath 32.999 33.768 0.400 Sens
+newpath 26.972 33.422 0.400 Sens
+newpath 39.026 33.421 0.400 Sens
+newpath 24.120 32.949 0.400 Sens
+newpath 41.879 32.949 0.400 Sens
+newpath 21.528 32.149 0.400 Sens
+newpath 44.461 32.142 0.400 Sens
+newpath 5.462 42.938 0.400 Sens
+newpath 60.538 42.937 0.400 Sens
+newpath 32.999 29.019 0.400 Sens
+newpath 27.061 29.645 0.400 Sens
+newpath 38.937 29.644 0.400 Sens
+LF
+/CF6 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Fp1) 1.00 0 1 27.06 65.36 TP
+(Fp2) 1.00 0 1 38.94 65.36 TP
+(Fpz) 1.00 0 1 33.00 65.98 TP
+(AF3) 1.00 0 1 26.97 61.58 TP
+(AF4) 1.00 0 1 39.03 61.58 TP
+(Fz) 1.00 0 1 33.00 56.49 TP
+(F1) 1.00 0 1 28.83 56.59 TP
+(F2) 1.00 0 1 37.16 56.58 TP
+(F3) 1.00 0 1 24.71 56.90 TP
+(F4) 1.00 0 1 41.28 56.90 TP
+(F5) 1.00 0 1 20.72 57.52 TP
+(F6) 1.00 0 1 45.27 57.51 TP
+(F7) 1.00 0 1 17.01 58.65 TP
+(F8) 1.00 0 1 48.98 58.67 TP
+(FCz) 1.00 0 1 33.00 51.74 TP
+(FC1) 1.00 0 1 28.21 51.81 TP
+(FC2) 1.00 0 1 37.79 51.81 TP
+(FC3) 1.00 0 1 23.43 52.00 TP
+(FC4) 1.00 0 1 42.57 52.00 TP
+(FC5) 1.00 0 1 18.69 52.40 TP
+(FC6) 1.00 0 1 47.31 52.40 TP
+(FT7) 1.00 0 1 14.05 53.18 TP
+(FT8) 1.00 0 1 51.95 53.18 TP
+(Cz) 1.00 0 1 33.00 47.00 TP
+(C1) 1.00 0 1 28.01 47.00 TP
+(C2) 1.00 0 1 38.00 47.00 TP
+(C3) 1.00 0 1 23.01 47.00 TP
+(C4) 1.00 0 1 42.99 47.00 TP
+(C5) 1.00 0 1 18.02 47.00 TP
+(C6) 1.00 0 1 47.98 47.00 TP
+(T7) 1.00 0 1 13.03 47.00 TP
+(T8) 1.00 0 1 52.97 47.00 TP
+(CPz) 1.00 0 1 33.00 42.26 TP
+(CP1) 1.00 0 1 28.21 42.20 TP
+(CP2) 1.00 0 1 37.79 42.20 TP
+(CP3) 1.00 0 1 23.43 42.00 TP
+(CP4) 1.00 0 1 42.57 42.00 TP
+(CP5) 1.00 0 1 18.69 41.60 TP
+(CP6) 1.00 0 1 47.31 41.60 TP
+(TP7) 1.00 0 1 14.05 40.83 TP
+(TP8) 1.00 0 1 51.94 40.81 TP
+(Pz) 1.00 0 1 33.00 37.51 TP
+(P1) 1.00 0 1 28.83 37.41 TP
+(P2) 1.00 0 1 37.16 37.42 TP
+(P3) 1.00 0 1 24.71 37.10 TP
+(P4) 1.00 0 1 41.28 37.10 TP
+(P5) 1.00 0 1 20.72 36.48 TP
+(P6) 1.00 0 1 45.27 36.49 TP
+(P7) 1.00 0 1 17.01 35.35 TP
+(P8) 1.00 0 1 48.98 35.34 TP
+(POz) 1.00 0 1 33.00 32.77 TP
+(PO3) 1.00 0 1 26.97 32.42 TP
+(PO4) 1.00 0 1 39.03 32.42 TP
+(PO5) 1.00 0 1 24.12 31.95 TP
+(PO6) 1.00 0 1 41.88 31.95 TP
+(PO7) 1.00 0 1 21.53 31.15 TP
+(PO8) 1.00 0 1 44.46 31.14 TP
+(M1) 1.00 0 1 5.46 41.94 TP
+(M2) 1.00 0 1 60.54 41.94 TP
+(Oz) 1.00 0 1 33.00 28.02 TP
+(O1) 1.00 0 1 27.06 28.64 TP
+(O2) 1.00 0 1 38.94 28.64 TP
+grestore
+%%EndObject
+%%BeginObject: (002 text)
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(negative) 5.00 4 2 88.40 71.00 TP
+%%EndObject
+%%BeginObject: (003 map)
+/CF5 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(0.180 .. 0.220 s) 2.00 4 2 70.00 20.00 TP
+gsave
+98.00 48.00 translate
+1.192659e+01 1.192659e+01 scale
+90 rotate
+/outline { { -3.2 -3.2 3.2 3.2 1.539 0.498
+1.591 0.000 1.539 -0.498 0.978 -1.340 -0.425 -2.309
+-1.330 -0.961 -1.539 -0.498 -1.592 0.000 -1.539 0.498 -1.329 0.962
+-0.424 2.309 0.977 1.340 
+} <0B 00 01 2B 03 0A > } cvlit def
+9 0 PalS outline ufill
+0.00 0.00 0.00 0 0.100 1 LI
+currentlinewidth 8.384629e-02 mul setlinewidth
+gsave 10 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.208 -0.785
+-1.107 -0.995 -0.938 -1.211 -0.560 -1.228 -0.459 -1.235
+-0.402 -1.206 0.000 -0.873 0.021 -0.854 0.080 -0.831 0.000 -0.586
+-0.029 -0.446 -0.022 -0.418 -0.147 -0.147 -0.178 0.000 -0.282 0.281
+-0.327 0.405 -0.413 0.647 -0.484 0.785 -0.586 0.885 -0.752 1.081
+-0.917 1.145 -1.319 0.973 -1.325 0.967 -0.424 2.309 0.977 1.340
+1.539 0.498 1.591 0.000 1.539 -0.498 0.978 -1.340 -0.425 -2.309
+-1.330 -0.961 -1.539 -0.498 -1.592 0.000 -1.539 0.498 -1.333 0.953
+-1.333 0.681 -1.367 0.502 -1.431 0.342 -1.489 0.000 -1.432 -0.344
+-1.324 -0.503 -1.252 -0.684 -1.217 -0.739 
+} <0B 00 01 4A 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 11 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.293 -0.844
+-1.230 -0.976 -0.969 -1.311 -0.884 -1.315 -0.477 -1.342
+-0.249 -1.225 0.000 -1.018 0.105 -0.921 0.405 -0.804 0.398 -0.783
+0.418 -0.766 0.440 -0.797 0.847 -0.805 0.966 -0.629 0.968 -0.410
+0.849 -0.062 0.829 0.000 0.830 0.040 0.799 0.141 0.746 0.000
+0.642 -0.210 0.402 -0.313 0.233 -0.232 0.000 -0.175 -0.055 -0.055
+-0.066 0.000 -0.105 0.105 -0.217 0.409 -0.325 0.717 -0.351 0.808
+-0.433 0.971 -0.582 1.148 -0.963 1.296 -1.055 1.257 -1.232 1.106
+-0.424 2.309 0.977 1.340 1.539 0.498 1.591 0.000 1.539 -0.498
+0.978 -1.340 -0.425 -2.309 -1.330 -0.961 -1.539 -0.498 -1.592 0.000
+-1.539 0.498 -1.439 0.720 -1.439 0.587 -1.455 0.500 -1.486 0.422
+-1.558 0.000 -1.488 -0.424 -1.436 -0.500 -1.382 -0.638 
+} <0B 00 01 55 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 12 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.841 0.690
+0.831 0.702 0.821 0.697 0.808 0.680 0.621 0.373
+0.579 0.156 0.520 0.000 0.483 -0.074 0.399 -0.110 0.170 0.000
+0.134 0.134 0.000 0.123 -0.106 0.414 -0.160 0.565 -0.231 0.818
+-0.404 1.161 -0.423 1.203 -0.462 1.258 -0.817 1.427 -0.930 1.422
+-1.139 1.245 -0.424 2.309 0.977 1.340 1.539 0.498 1.591 0.000
+1.539 -0.498 0.978 -1.340 -0.425 -2.309 -1.310 -0.990 -0.935 -1.414
+-0.817 -1.427 -0.495 -1.448 -0.097 -1.244 0.000 -1.164 0.188 -0.988
+0.427 -0.895 0.692 -0.936 0.868 -0.939 1.129 -0.550 1.130 -0.471
+1.087 -0.345 0.977 0.000 0.984 0.223 0.930 0.397 
+} <0B 00 01 4B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 13 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.268 -0.504
+0.957 -0.967 0.888 -1.048 0.824 -1.051 0.435 -0.992
+0.272 -1.055 0.065 -1.248 0.033 -1.277 0.000 -1.299 -0.281 -1.435
+-0.514 -1.555 -0.589 -1.550 -0.875 -1.520 -1.206 -1.145 -0.425 -2.309
+0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498 0.977 1.340
+-0.424 2.309 -1.046 1.384 -0.864 1.538 -0.589 1.550 -0.504 1.510
+-0.296 1.219 -0.194 0.993 -0.111 0.828 0.000 0.434 0.015 0.432
+0.406 0.469 0.617 0.751 0.856 0.862 1.086 0.571 1.118 0.467
+1.137 0.405 1.126 0.000 1.267 -0.444 
+} <0B 00 01 45 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 14 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.286 0.418
+1.276 0.504 0.911 0.985 0.881 1.023 0.624 0.903
+0.420 0.809 0.015 0.850 0.000 0.860 -0.169 1.235 -0.341 1.475
+-0.410 1.606 -0.508 1.666 -0.798 1.653 -0.953 1.523 -0.424 2.309
+0.977 1.340 1.539 0.498 1.591 0.000 1.539 -0.498 0.978 -1.340
+-0.425 -2.309 -1.102 -1.300 -0.815 -1.625 -0.510 -1.657 -0.392 -1.609
+0.000 -1.419 0.123 -1.335 0.245 -1.225 0.356 -1.122 0.443 -1.088
+0.651 -1.120 0.906 -1.108 1.184 -0.784 1.374 -0.502 1.371 -0.302
+1.275 0.000 
+} <0B 00 01 43 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 15 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.430 0.221
+1.397 0.501 1.176 0.791 0.905 1.103 0.680 1.110
+0.435 0.997 0.226 1.018 0.000 1.158 -0.042 1.251 -0.084 1.310
+-0.254 1.632 -0.493 1.780 -0.732 1.769 -0.859 1.661 -0.424 2.309
+0.977 1.340 1.539 0.498 1.591 0.000 1.539 -0.498 0.978 -1.340
+-0.425 -2.309 -0.997 -1.456 -0.755 -1.730 -0.497 -1.758 -0.209 -1.640
+0.000 -1.539 0.214 -1.393 0.425 -1.203 0.440 -1.189 0.451 -1.185
+0.479 -1.189 0.925 -1.167 1.411 -0.601 1.479 -0.499 1.475 -0.160
+1.424 0.000 
+} <0B 00 01 43 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 16 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.573 0.025
+1.517 0.498 1.483 0.543 0.928 1.180 0.469 1.193
+0.451 1.185 0.436 1.187 0.406 1.205 0.118 1.332 0.000 1.473
+-0.098 1.658 -0.478 1.893 -0.666 1.885 -0.766 1.800 -0.424 2.309
+0.977 1.340 1.539 0.498 1.591 0.000 1.580 -0.112 1.578 -0.018
+1.573 0.000 
+} <0B 00 01 34 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 16 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.943 -1.226
+0.614 -1.243 0.470 -1.303 0.305 -1.452 0.000 -1.658
+-0.025 -1.671 -0.484 -1.858 -0.695 -1.836 -0.893 -1.611 -0.425 -2.309
+0.978 -1.340 1.435 -0.655 
+} <0B 00 01 2B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 17 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.951 1.256
+1.299 0.858 0.977 1.340 -0.424 2.309 -0.673 1.939
+-0.600 2.001 -0.464 2.007 -0.052 1.753 0.117 1.655 0.292 1.444
+0.480 1.362 0.692 1.264 
+} <0B 00 01 2B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 17 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.961 -1.286
+0.805 -1.293 0.490 -1.424 0.395 -1.510 0.201 -1.641
+-0.084 -1.800 -0.471 -1.959 -0.635 -1.941 -0.789 -1.767 -0.425 -2.309
+0.978 -1.340 1.195 -1.013 
+} <0B 00 01 2B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 18 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.975 1.333
+1.005 1.298 0.977 1.340 -0.424 2.309 -0.580 2.078
+-0.534 2.116 -0.449 2.120 -0.192 1.962 0.427 1.604 0.467 1.556
+0.509 1.537 0.952 1.334 
+} <0B 00 01 2B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 18 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.511 -1.545
+0.486 -1.568 0.435 -1.602 -0.182 -1.946 -0.457 -2.059
+-0.574 -2.047 -0.684 -1.922 -0.425 -2.309 0.928 -1.374 0.884 -1.391
+
+} <0B 00 01 29 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 19 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.580 -2.077
+-0.514 -2.152 -0.444 -2.159 -0.279 -2.092 0.233 -1.806
+0.385 -1.749 -0.425 -2.309 -0.580 -2.077 
+} <0B 00 01 27 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 19 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.486 2.217
+-0.468 2.232 -0.434 2.233 -0.332 2.170 0.032 1.960
+0.170 1.898 -0.424 2.309 -0.486 2.217 
+} <0B 00 01 27 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 20 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.476 -2.233
+-0.454 -2.257 -0.431 -2.260 -0.377 -2.238 -0.208 -2.143
+-0.158 -2.125 -0.425 -2.309 -0.476 -2.233 
+} <0B 00 01 27 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 9 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.805 -0.379
+0.792 -0.350 0.800 -0.347 0.803 -0.342 0.806 -0.350
+
+} <0B 00 01 24 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 8 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.030 -0.918
+-0.984 -1.013 -0.907 -1.112 -0.643 -1.124 -0.440 -1.057
+-0.162 -0.824 -0.207 -0.609 -0.160 -0.412 -0.240 -0.239 -0.289 0.000
+-0.402 0.304 -0.441 0.397 -0.485 0.458 -0.634 0.746 -0.874 0.979
+-1.177 0.735 -1.249 0.664 -1.278 0.504 -1.375 0.262 -1.420 0.000
+-1.377 -0.264 -1.222 -0.491 -1.211 -0.501 -1.201 -0.516 -1.071 -0.722
+
+} <0B 00 01 38 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 7 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.010 0.608
+-0.912 0.704 -0.840 0.762 -0.783 0.707 -0.748 0.639
+-0.562 0.381 -0.402 0.004 -0.401 0.000 -0.402 -0.003 -0.398 -0.012
+-0.332 -0.331 -0.297 -0.406 -0.385 -0.772 -0.378 -0.806 -0.422 -0.843
+-0.667 -0.924 -0.871 -0.961 -0.925 -0.705 -0.976 -0.624 -1.091 -0.456
+-1.213 -0.342 -1.321 -0.184 -1.351 0.000 -1.320 0.183 -1.218 0.436
+-1.158 0.481 
+} <0B 00 01 39 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 6 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.207 0.245
+-1.265 0.103 -1.282 0.000 -1.265 -0.103 -1.204 -0.192
+-0.971 -0.412 -0.825 -0.625 -0.459 -0.394 -0.568 -0.147 -0.523 0.000
+-0.603 0.176 -0.682 0.365 -0.819 0.554 -0.981 0.416 
+} <0B 00 01 2D 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 5 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.196 0.055
+-1.209 0.023 -1.213 0.000 -1.209 -0.023 -1.196 -0.043
+-0.852 -0.367 -0.809 -0.429 -0.704 -0.362 -0.735 -0.291 -0.646 0.000
+-0.803 0.349 -0.803 0.349 -0.804 0.350 -0.804 0.350 
+} <0B 00 01 2D 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 4 0 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.769 0.000
+-0.798 -0.094 -0.889 0.000 -0.797 0.063 
+} <0B 00 01 23 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+LF
+0.00 0.00 0.00 0 0.200 1 LI
+currentlinewidth 8.384629e-02 mul setlinewidth
+outline ustroke
+LF
+grestore
+gsave
+0.00 0.00 0.00 0 0.150 0 LI
+newpath 92.061 66.355 0.400 Sens
+newpath 103.937 66.356 0.400 Sens
+newpath 97.999 66.981 0.400 Sens
+newpath 91.972 62.579 0.400 Sens
+newpath 104.026 62.579 0.400 Sens
+newpath 97.999 57.491 0.400 Sens
+newpath 93.833 57.586 0.400 Sens
+newpath 102.162 57.577 0.400 Sens
+newpath 89.712 57.896 0.400 Sens
+newpath 106.276 57.901 0.400 Sens
+newpath 85.723 58.520 0.400 Sens
+newpath 110.267 58.513 0.400 Sens
+newpath 82.013 59.652 0.400 Sens
+newpath 113.976 59.666 0.400 Sens
+newpath 97.999 52.743 0.400 Sens
+newpath 93.207 52.805 0.400 Sens
+newpath 102.792 52.806 0.400 Sens
+newpath 88.430 52.998 0.400 Sens
+newpath 107.569 52.998 0.400 Sens
+newpath 83.692 53.398 0.400 Sens
+newpath 112.308 53.398 0.400 Sens
+newpath 79.055 54.175 0.400 Sens
+newpath 116.945 54.176 0.400 Sens
+newpath 97.999 48.000 0.400 Sens
+newpath 93.011 48.000 0.400 Sens
+newpath 102.999 48.000 0.400 Sens
+newpath 88.010 48.000 0.400 Sens
+newpath 107.988 48.000 0.400 Sens
+newpath 83.020 48.000 0.400 Sens
+newpath 112.980 48.000 0.400 Sens
+newpath 78.026 48.001 0.400 Sens
+newpath 117.974 48.001 0.400 Sens
+newpath 97.999 43.257 0.400 Sens
+newpath 93.207 43.195 0.400 Sens
+newpath 102.792 43.195 0.400 Sens
+newpath 88.430 43.003 0.400 Sens
+newpath 107.570 43.002 0.400 Sens
+newpath 83.692 42.603 0.400 Sens
+newpath 112.308 42.603 0.400 Sens
+newpath 79.054 41.826 0.400 Sens
+newpath 116.939 41.807 0.400 Sens
+newpath 97.999 38.509 0.400 Sens
+newpath 93.833 38.415 0.400 Sens
+newpath 102.162 38.423 0.400 Sens
+newpath 89.711 38.105 0.400 Sens
+newpath 106.277 38.100 0.400 Sens
+newpath 85.723 37.480 0.400 Sens
+newpath 110.267 37.487 0.400 Sens
+newpath 82.013 36.349 0.400 Sens
+newpath 113.977 36.335 0.400 Sens
+newpath 97.999 33.768 0.400 Sens
+newpath 91.972 33.422 0.400 Sens
+newpath 104.026 33.421 0.400 Sens
+newpath 89.120 32.949 0.400 Sens
+newpath 106.879 32.949 0.400 Sens
+newpath 86.528 32.149 0.400 Sens
+newpath 109.461 32.142 0.400 Sens
+newpath 70.462 42.938 0.400 Sens
+newpath 125.538 42.937 0.400 Sens
+newpath 97.999 29.019 0.400 Sens
+newpath 92.061 29.645 0.400 Sens
+newpath 103.937 29.644 0.400 Sens
+LF
+/CF6 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Fp1) 1.00 0 1 92.06 65.36 TP
+(Fp2) 1.00 0 1 103.94 65.36 TP
+(Fpz) 1.00 0 1 98.00 65.98 TP
+(AF3) 1.00 0 1 91.97 61.58 TP
+(AF4) 1.00 0 1 104.03 61.58 TP
+(Fz) 1.00 0 1 98.00 56.49 TP
+(F1) 1.00 0 1 93.83 56.59 TP
+(F2) 1.00 0 1 102.16 56.58 TP
+(F3) 1.00 0 1 89.71 56.90 TP
+(F4) 1.00 0 1 106.28 56.90 TP
+(F5) 1.00 0 1 85.72 57.52 TP
+(F6) 1.00 0 1 110.27 57.51 TP
+(F7) 1.00 0 1 82.01 58.65 TP
+(F8) 1.00 0 1 113.98 58.67 TP
+(FCz) 1.00 0 1 98.00 51.74 TP
+(FC1) 1.00 0 1 93.21 51.81 TP
+(FC2) 1.00 0 1 102.79 51.81 TP
+(FC3) 1.00 0 1 88.43 52.00 TP
+(FC4) 1.00 0 1 107.57 52.00 TP
+(FC5) 1.00 0 1 83.69 52.40 TP
+(FC6) 1.00 0 1 112.31 52.40 TP
+(FT7) 1.00 0 1 79.05 53.18 TP
+(FT8) 1.00 0 1 116.95 53.18 TP
+(Cz) 1.00 0 1 98.00 47.00 TP
+(C1) 1.00 0 1 93.01 47.00 TP
+(C2) 1.00 0 1 103.00 47.00 TP
+(C3) 1.00 0 1 88.01 47.00 TP
+(C4) 1.00 0 1 107.99 47.00 TP
+(C5) 1.00 0 1 83.02 47.00 TP
+(C6) 1.00 0 1 112.98 47.00 TP
+(T7) 1.00 0 1 78.03 47.00 TP
+(T8) 1.00 0 1 117.97 47.00 TP
+(CPz) 1.00 0 1 98.00 42.26 TP
+(CP1) 1.00 0 1 93.21 42.20 TP
+(CP2) 1.00 0 1 102.79 42.20 TP
+(CP3) 1.00 0 1 88.43 42.00 TP
+(CP4) 1.00 0 1 107.57 42.00 TP
+(CP5) 1.00 0 1 83.69 41.60 TP
+(CP6) 1.00 0 1 112.31 41.60 TP
+(TP7) 1.00 0 1 79.05 40.83 TP
+(TP8) 1.00 0 1 116.94 40.81 TP
+(Pz) 1.00 0 1 98.00 37.51 TP
+(P1) 1.00 0 1 93.83 37.41 TP
+(P2) 1.00 0 1 102.16 37.42 TP
+(P3) 1.00 0 1 89.71 37.10 TP
+(P4) 1.00 0 1 106.28 37.10 TP
+(P5) 1.00 0 1 85.72 36.48 TP
+(P6) 1.00 0 1 110.27 36.49 TP
+(P7) 1.00 0 1 82.01 35.35 TP
+(P8) 1.00 0 1 113.98 35.34 TP
+(POz) 1.00 0 1 98.00 32.77 TP
+(PO3) 1.00 0 1 91.97 32.42 TP
+(PO4) 1.00 0 1 104.03 32.42 TP
+(PO5) 1.00 0 1 89.12 31.95 TP
+(PO6) 1.00 0 1 106.88 31.95 TP
+(PO7) 1.00 0 1 86.53 31.15 TP
+(PO8) 1.00 0 1 109.46 31.14 TP
+(M1) 1.00 0 1 70.46 41.94 TP
+(M2) 1.00 0 1 125.54 41.94 TP
+(Oz) 1.00 0 1 98.00 28.02 TP
+(O1) 1.00 0 1 92.06 28.64 TP
+(O2) 1.00 0 1 103.94 28.64 TP
+grestore
+%%EndObject
+%%BeginObject: (004 text)
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(positive - negative) 5.00 4 2 140.00 71.00 TP
+%%EndObject
+%%BeginObject: (005 map)
+/CF5 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(0.180 .. 0.220 s) 2.00 4 2 135.00 20.00 TP
+gsave
+163.00 48.00 translate
+1.192659e+01 1.192659e+01 scale
+90 rotate
+/outline { { -3.2 -3.2 3.2 3.2 1.539 0.498
+1.591 0.000 1.539 -0.498 0.978 -1.340 -0.425 -2.309
+-1.330 -0.961 -1.539 -0.498 -1.592 0.000 -1.539 0.498 -1.329 0.962
+-0.424 2.309 0.977 1.340 
+} <0B 00 01 2B 03 0A > } cvlit def
+8 1 PalS outline ufill
+0.00 0.00 0.00 0 0.100 1 LI
+currentlinewidth 8.384629e-02 mul setlinewidth
+gsave 9 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.548 -2.125
+-0.480 -2.212 -0.433 -2.245 -0.391 -2.260 -0.354 -2.255
+-0.336 -2.248 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+0.977 1.340 -0.373 2.274 -0.383 2.278 -0.408 2.285 -0.428 2.282
+-0.449 2.266 -0.465 2.249 -1.329 0.962 -1.539 0.498 -1.592 0.000
+-1.539 -0.498 -1.330 -0.961 -0.548 -2.125 
+} <0B 00 01 36 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 10 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.745 -1.832
+-0.567 -2.059 -0.446 -2.143 -0.339 -2.181 -0.242 -2.170
+-0.195 -2.151 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+0.977 1.340 -0.160 2.126 -0.211 2.146 -0.340 2.182 -0.443 2.168
+-0.551 2.086 -0.634 1.998 -1.329 0.962 -1.539 0.498 -1.592 0.000
+-1.539 -0.498 -1.330 -0.961 -0.745 -1.832 
+} <0B 00 01 36 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 11 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.941 -1.539
+-0.655 -1.905 -0.460 -2.042 -0.286 -2.103 -0.130 -2.084
+-0.054 -2.053 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+0.977 1.340 0.054 1.978 -0.039 2.014 -0.271 2.080 -0.457 2.055
+-0.654 1.906 -0.802 1.746 -1.329 0.962 -1.539 0.498 -1.592 0.000
+-1.539 -0.498 -1.330 -0.961 -0.941 -1.539 
+} <0B 00 01 36 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 12 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.138 -1.247
+-0.743 -1.752 -0.473 -1.940 -0.234 -2.024 -0.018 -1.998
+0.086 -1.956 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+0.977 1.340 0.268 1.830 0.133 1.883 -0.203 1.978 -0.472 1.942
+-0.757 1.727 -0.971 1.495 -1.329 0.962 -1.539 0.498 -1.592 0.000
+-1.539 -0.498 -1.330 -0.961 -1.138 -1.247 
+} <0B 00 01 36 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 13 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.329 -0.958
+-1.328 -0.961 -1.325 -0.966 -0.831 -1.598 -0.486 -1.838
+-0.181 -1.946 0.094 -1.913 0.227 -1.859 0.978 -1.340 1.539 -0.498
+1.591 0.000 1.539 0.498 0.977 1.340 0.482 1.682 0.305 1.751
+-0.134 1.876 -0.487 1.828 -0.859 1.547 -1.140 1.243 -1.329 0.962
+-1.539 0.498 -1.554 0.355 -1.579 0.000 -1.498 -0.439 -1.475 -0.499
+-1.463 -0.566 
+} <0B 00 01 39 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 14 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.292 -0.841
+-1.243 -0.974 -1.119 -1.188 -0.918 -1.444 -0.500 -1.737
+-0.129 -1.867 0.205 -1.827 0.368 -1.761 0.978 -1.340 1.539 -0.498
+1.591 0.000 1.539 0.498 0.977 1.340 0.696 1.535 0.478 1.619
+-0.066 1.773 -0.501 1.715 -0.962 1.367 -1.309 0.992 -1.329 0.962
+-1.353 0.910 -1.410 0.613 -1.454 0.500 -1.475 0.406 -1.504 0.000
+-1.439 -0.354 -1.383 -0.502 -1.353 -0.664 
+} <0B 00 01 3B 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 15 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.243 -0.759
+-1.158 -0.987 -0.969 -1.312 -0.942 -1.330 -0.791 -1.441
+-0.513 -1.635 -0.076 -1.789 0.317 -1.742 0.508 -1.664 0.978 -1.340
+1.539 -0.498 1.591 0.000 1.539 0.498 0.977 1.340 0.910 1.387
+0.844 1.412 0.505 1.510 0.356 1.485 0.000 1.666 -0.120 1.655
+-0.516 1.601 -0.571 1.560 -0.831 1.301 -0.951 1.255 -1.203 0.981
+-1.267 0.761 -1.272 0.736 -1.363 0.502 -1.407 0.308 -1.429 0.000
+-1.380 -0.268 -1.291 -0.504 -1.254 -0.699 -1.245 -0.743 
+} <0B 00 01 41 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 16 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.132 -0.842
+-1.073 -1.000 -0.942 -1.225 -0.828 -1.300 -0.510 -1.534
+-0.460 -1.550 -0.239 -1.635 -0.024 -1.711 0.429 -1.656 0.649 -1.567
+0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498 1.047 1.236
+0.965 1.302 0.844 1.305 0.487 1.407 0.145 1.349 0.000 1.423
+-0.226 1.401 -0.490 1.425 -0.661 1.256 -0.920 1.155 -1.061 1.002
+-1.100 0.866 -1.171 0.734 -1.237 0.594 -1.272 0.504 -1.339 0.210
+-1.354 0.000 -1.321 -0.183 -1.219 -0.450 -1.201 -0.497 -1.194 -0.519
+-1.150 -0.731 
+} <0B 00 01 43 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 17 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -1.021 -0.924
+-0.988 -1.012 -0.915 -1.138 -0.715 -1.269 -0.493 -1.433
+-0.350 -1.480 0.000 -1.614 0.486 -1.568 0.514 -1.566 0.580 -1.555
+0.790 -1.470 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+1.148 1.084 0.948 1.247 0.650 1.253 0.470 1.304 0.106 1.243
+0.000 1.210 -0.264 1.223 -0.459 1.241 -0.491 1.210 -0.890 1.055
+-0.918 1.024 -0.926 0.996 -1.073 0.723 -1.162 0.535 -1.182 0.490
+-1.214 0.362 -1.271 0.113 -1.279 0.000 -1.261 -0.098 -1.207 -0.241
+-1.120 -0.467 -1.086 -0.571 -1.055 -0.720 
+} <0B 00 01 45 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 18 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.910 -1.007
+-0.903 -1.025 -0.888 -1.051 -0.601 -1.239 -0.475 -1.332
+-0.240 -1.409 0.000 -1.501 0.333 -1.470 0.496 -1.459 0.878 -1.394
+0.931 -1.372 0.978 -1.340 1.539 -0.498 1.591 0.000 1.539 0.498
+1.249 0.932 0.931 1.191 0.456 1.201 0.453 1.201 0.447 1.200
+0.000 1.060 -0.298 1.076 -0.441 1.066 -0.730 0.955 -0.865 0.917
+-0.975 0.712 -1.028 0.599 -1.093 0.457 -1.196 0.047 -1.203 0.015
+-1.204 0.000 -1.202 -0.013 -1.195 -0.031 -1.039 -0.437 -0.978 -0.623
+-0.960 -0.709 
+} <0B 00 01 43 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 19 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 -0.894 0.664
+-0.877 0.700 -0.841 0.767 -0.528 0.856 -0.427 0.894
+-0.098 0.916 0.000 0.911 0.151 0.959 0.444 1.102 0.598 1.142
+0.915 1.136 1.351 0.781 1.539 0.498 1.591 0.000 1.539 -0.498
+1.075 -1.194 0.967 -1.304 0.811 -1.295 0.478 -1.352 0.180 -1.372
+0.000 -1.389 -0.130 -1.339 -0.458 -1.231 -0.488 -1.209 -0.579 -1.149
+-0.775 -0.977 -0.847 -0.804 -0.865 -0.698 -0.870 -0.675 -0.958 -0.407
+-1.073 -0.107 -1.099 0.000 -1.086 0.096 -1.003 0.424 
+} <0B 00 01 41 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 20 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 0.898 1.080
+1.452 0.629 1.539 0.498 1.591 0.000 1.539 -0.498
+1.222 -0.974 0.951 -1.251 0.558 -1.228 0.460 -1.244 0.027 -1.274
+0.000 -1.276 -0.020 -1.269 -0.093 -1.244 -0.390 -1.150 -0.442 -1.073
+-0.631 -0.906 -0.706 -0.727 -0.765 -0.650 -0.819 -0.553 -0.877 -0.377
+-0.932 -0.233 -0.988 0.000 -0.960 0.209 -0.914 0.391 -0.822 0.593
+-0.744 0.636 -0.416 0.729 -0.357 0.746 0.000 0.771 0.085 0.831
+0.436 1.002 0.746 1.083 
+} <0B 00 01 3F 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+gsave 21 1 PalS
+/iso { { -3.2 -3.2 3.2 3.2 1.546 0.433
+1.529 0.498 0.889 1.019 0.881 1.024 0.847 1.012
+0.427 0.902 0.252 0.816 0.000 0.640 -0.225 0.624 -0.410 0.569
+-0.578 0.522 -0.807 0.397 -0.825 0.357 -0.834 0.322 -0.877 0.000
+-0.802 -0.314 -0.793 -0.340 -0.790 -0.351 -0.663 -0.580 -0.512 -0.778
+-0.488 -0.836 -0.426 -0.890 -0.301 -1.078 0.000 -1.174 0.385 -1.146
+0.449 -1.160 0.519 -1.173 0.934 -1.198 1.368 -0.755 1.539 -0.498
+1.591 0.000 1.546 0.433 
+} <0B 00 01 3F 03 0A > } cvlit def
+iso ufill grestore
+iso ustroke
+LF
+0.00 0.00 0.00 0 0.200 1 LI
+currentlinewidth 8.384629e-02 mul setlinewidth
+outline ustroke
+LF
+grestore
+gsave
+0.00 0.00 0.00 0 0.150 0 LI
+newpath 157.061 66.355 0.400 Sens
+newpath 168.937 66.356 0.400 Sens
+newpath 162.999 66.981 0.400 Sens
+newpath 156.972 62.579 0.400 Sens
+newpath 169.026 62.579 0.400 Sens
+newpath 162.999 57.491 0.400 Sens
+newpath 158.833 57.586 0.400 Sens
+newpath 167.162 57.577 0.400 Sens
+newpath 154.712 57.896 0.400 Sens
+newpath 171.276 57.901 0.400 Sens
+newpath 150.723 58.520 0.400 Sens
+newpath 175.267 58.513 0.400 Sens
+newpath 147.013 59.652 0.400 Sens
+newpath 178.976 59.666 0.400 Sens
+newpath 162.999 52.743 0.400 Sens
+newpath 158.207 52.805 0.400 Sens
+newpath 167.792 52.806 0.400 Sens
+newpath 153.430 52.998 0.400 Sens
+newpath 172.569 52.998 0.400 Sens
+newpath 148.692 53.398 0.400 Sens
+newpath 177.308 53.398 0.400 Sens
+newpath 144.055 54.175 0.400 Sens
+newpath 181.945 54.176 0.400 Sens
+newpath 162.999 48.000 0.400 Sens
+newpath 158.011 48.000 0.400 Sens
+newpath 167.999 48.000 0.400 Sens
+newpath 153.010 48.000 0.400 Sens
+newpath 172.988 48.000 0.400 Sens
+newpath 148.020 48.000 0.400 Sens
+newpath 177.980 48.000 0.400 Sens
+newpath 143.026 48.001 0.400 Sens
+newpath 182.974 48.001 0.400 Sens
+newpath 162.999 43.257 0.400 Sens
+newpath 158.207 43.195 0.400 Sens
+newpath 167.792 43.195 0.400 Sens
+newpath 153.430 43.003 0.400 Sens
+newpath 172.570 43.002 0.400 Sens
+newpath 148.692 42.603 0.400 Sens
+newpath 177.308 42.603 0.400 Sens
+newpath 144.054 41.826 0.400 Sens
+newpath 181.939 41.807 0.400 Sens
+newpath 162.999 38.509 0.400 Sens
+newpath 158.833 38.415 0.400 Sens
+newpath 167.162 38.423 0.400 Sens
+newpath 154.711 38.105 0.400 Sens
+newpath 171.277 38.100 0.400 Sens
+newpath 150.723 37.480 0.400 Sens
+newpath 175.267 37.487 0.400 Sens
+newpath 147.013 36.349 0.400 Sens
+newpath 178.977 36.335 0.400 Sens
+newpath 162.999 33.768 0.400 Sens
+newpath 156.972 33.422 0.400 Sens
+newpath 169.026 33.421 0.400 Sens
+newpath 154.120 32.949 0.400 Sens
+newpath 171.879 32.949 0.400 Sens
+newpath 151.528 32.149 0.400 Sens
+newpath 174.461 32.142 0.400 Sens
+newpath 135.462 42.938 0.400 Sens
+newpath 190.538 42.937 0.400 Sens
+newpath 162.999 29.019 0.400 Sens
+newpath 157.061 29.645 0.400 Sens
+newpath 168.937 29.644 0.400 Sens
+LF
+/CF6 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Fp1) 1.00 0 1 157.06 65.36 TP
+(Fp2) 1.00 0 1 168.94 65.36 TP
+(Fpz) 1.00 0 1 163.00 65.98 TP
+(AF3) 1.00 0 1 156.97 61.58 TP
+(AF4) 1.00 0 1 169.03 61.58 TP
+(Fz) 1.00 0 1 163.00 56.49 TP
+(F1) 1.00 0 1 158.83 56.59 TP
+(F2) 1.00 0 1 167.16 56.58 TP
+(F3) 1.00 0 1 154.71 56.90 TP
+(F4) 1.00 0 1 171.28 56.90 TP
+(F5) 1.00 0 1 150.72 57.52 TP
+(F6) 1.00 0 1 175.27 57.51 TP
+(F7) 1.00 0 1 147.01 58.65 TP
+(F8) 1.00 0 1 178.98 58.67 TP
+(FCz) 1.00 0 1 163.00 51.74 TP
+(FC1) 1.00 0 1 158.21 51.81 TP
+(FC2) 1.00 0 1 167.79 51.81 TP
+(FC3) 1.00 0 1 153.43 52.00 TP
+(FC4) 1.00 0 1 172.57 52.00 TP
+(FC5) 1.00 0 1 148.69 52.40 TP
+(FC6) 1.00 0 1 177.31 52.40 TP
+(FT7) 1.00 0 1 144.05 53.18 TP
+(FT8) 1.00 0 1 181.95 53.18 TP
+(Cz) 1.00 0 1 163.00 47.00 TP
+(C1) 1.00 0 1 158.01 47.00 TP
+(C2) 1.00 0 1 168.00 47.00 TP
+(C3) 1.00 0 1 153.01 47.00 TP
+(C4) 1.00 0 1 172.99 47.00 TP
+(C5) 1.00 0 1 148.02 47.00 TP
+(C6) 1.00 0 1 177.98 47.00 TP
+(T7) 1.00 0 1 143.03 47.00 TP
+(T8) 1.00 0 1 182.97 47.00 TP
+(CPz) 1.00 0 1 163.00 42.26 TP
+(CP1) 1.00 0 1 158.21 42.20 TP
+(CP2) 1.00 0 1 167.79 42.20 TP
+(CP3) 1.00 0 1 153.43 42.00 TP
+(CP4) 1.00 0 1 172.57 42.00 TP
+(CP5) 1.00 0 1 148.69 41.60 TP
+(CP6) 1.00 0 1 177.31 41.60 TP
+(TP7) 1.00 0 1 144.05 40.83 TP
+(TP8) 1.00 0 1 181.94 40.81 TP
+(Pz) 1.00 0 1 163.00 37.51 TP
+(P1) 1.00 0 1 158.83 37.41 TP
+(P2) 1.00 0 1 167.16 37.42 TP
+(P3) 1.00 0 1 154.71 37.10 TP
+(P4) 1.00 0 1 171.28 37.10 TP
+(P5) 1.00 0 1 150.72 36.48 TP
+(P6) 1.00 0 1 175.27 36.49 TP
+(P7) 1.00 0 1 147.01 35.35 TP
+(P8) 1.00 0 1 178.98 35.34 TP
+(POz) 1.00 0 1 163.00 32.77 TP
+(PO3) 1.00 0 1 156.97 32.42 TP
+(PO4) 1.00 0 1 169.03 32.42 TP
+(PO5) 1.00 0 1 154.12 31.95 TP
+(PO6) 1.00 0 1 171.88 31.95 TP
+(PO7) 1.00 0 1 151.53 31.15 TP
+(PO8) 1.00 0 1 174.46 31.14 TP
+(M1) 1.00 0 1 135.46 41.94 TP
+(M2) 1.00 0 1 190.54 41.94 TP
+(Oz) 1.00 0 1 163.00 28.02 TP
+(O1) 1.00 0 1 157.06 28.64 TP
+(O2) 1.00 0 1 168.94 28.64 TP
+grestore
+%%EndObject
+%%BeginObject: (006 maplegend)
+0 0 PalS 50.00 15.00 0.71 2.00 rectfill
+1 0 PalS 50.71 15.00 0.71 2.00 rectfill
+2 0 PalS 51.43 15.00 0.71 2.00 rectfill
+3 0 PalS 52.14 15.00 0.71 2.00 rectfill
+4 0 PalS 52.86 15.00 0.71 2.00 rectfill
+5 0 PalS 53.57 15.00 0.71 2.00 rectfill
+6 0 PalS 54.29 15.00 0.71 2.00 rectfill
+7 0 PalS 55.00 15.00 0.71 2.00 rectfill
+8 0 PalS 55.71 15.00 0.71 2.00 rectfill
+9 0 PalS 56.43 15.00 0.71 2.00 rectfill
+10 0 PalS 57.14 15.00 0.71 2.00 rectfill
+11 0 PalS 57.86 15.00 0.71 2.00 rectfill
+12 0 PalS 58.57 15.00 0.71 2.00 rectfill
+13 0 PalS 59.29 15.00 0.71 2.00 rectfill
+14 0 PalS 60.00 15.00 0.71 2.00 rectfill
+15 0 PalS 60.71 15.00 0.71 2.00 rectfill
+16 0 PalS 61.43 15.00 0.71 2.00 rectfill
+17 0 PalS 62.14 15.00 0.71 2.00 rectfill
+18 0 PalS 62.86 15.00 0.71 2.00 rectfill
+19 0 PalS 63.57 15.00 0.71 2.00 rectfill
+20 0 PalS 64.29 15.00 0.71 2.00 rectfill
+21 0 PalS 65.00 15.00 0.71 2.00 rectfill
+22 0 PalS 65.71 15.00 0.71 2.00 rectfill
+23 0 PalS 66.43 15.00 0.71 2.00 rectfill
+24 0 PalS 67.14 15.00 0.71 2.00 rectfill
+25 0 PalS 67.86 15.00 0.71 2.00 rectfill
+26 0 PalS 68.57 15.00 0.71 2.00 rectfill
+27 0 PalS 69.29 15.00 0.71 2.00 rectfill
+28 0 PalS 70.00 15.00 0.71 2.00 rectfill
+29 0 PalS 70.71 15.00 0.71 2.00 rectfill
+30 0 PalS 71.43 15.00 0.71 2.00 rectfill
+31 0 PalS 72.14 15.00 0.71 2.00 rectfill
+32 0 PalS 72.86 15.00 0.71 2.00 rectfill
+33 0 PalS 73.57 15.00 0.71 2.00 rectfill
+34 0 PalS 74.29 15.00 0.71 2.00 rectfill
+35 0 PalS 75.00 15.00 0.71 2.00 rectfill
+36 0 PalS 75.71 15.00 0.71 2.00 rectfill
+37 0 PalS 76.43 15.00 0.71 2.00 rectfill
+38 0 PalS 77.14 15.00 0.71 2.00 rectfill
+39 0 PalS 77.86 15.00 0.71 2.00 rectfill
+40 0 PalS 78.57 15.00 0.71 2.00 rectfill
+41 0 PalS 79.29 15.00 0.71 2.00 rectfill
+0.00 0.00 0.00 0 0.100 1 LI
+50.71 17.00 50.71 15.00 LS
+51.43 17.00 51.43 15.00 LS
+52.14 17.00 52.14 15.00 LS
+52.86 17.00 52.86 15.00 LS
+53.57 17.00 53.57 15.00 LS
+54.29 17.00 54.29 15.00 LS
+55.00 17.00 55.00 15.00 LS
+55.71 17.00 55.71 15.00 LS
+56.43 17.00 56.43 15.00 LS
+57.14 17.00 57.14 15.00 LS
+57.86 17.00 57.86 15.00 LS
+58.57 17.00 58.57 15.00 LS
+59.29 17.00 59.29 15.00 LS
+60.00 17.00 60.00 15.00 LS
+60.71 17.00 60.71 15.00 LS
+61.43 17.00 61.43 15.00 LS
+62.14 17.00 62.14 15.00 LS
+62.86 17.00 62.86 15.00 LS
+63.57 17.00 63.57 15.00 LS
+64.29 17.00 64.29 15.00 LS
+65.00 17.00 65.00 15.00 LS
+65.71 17.00 65.71 15.00 LS
+66.43 17.00 66.43 15.00 LS
+67.14 17.00 67.14 15.00 LS
+67.86 17.00 67.86 15.00 LS
+68.57 17.00 68.57 15.00 LS
+69.29 17.00 69.29 15.00 LS
+70.00 17.00 70.00 15.00 LS
+70.71 17.00 70.71 15.00 LS
+71.43 17.00 71.43 15.00 LS
+72.14 17.00 72.14 15.00 LS
+72.86 17.00 72.86 15.00 LS
+73.57 17.00 73.57 15.00 LS
+74.29 17.00 74.29 15.00 LS
+75.00 17.00 75.00 15.00 LS
+75.71 17.00 75.71 15.00 LS
+76.43 17.00 76.43 15.00 LS
+77.14 17.00 77.14 15.00 LS
+77.86 17.00 77.86 15.00 LS
+78.57 17.00 78.57 15.00 LS
+79.29 17.00 79.29 15.00 LS
+LF
+0.00 0.00 0.00 0 0.200 1 LI
+50.00 15.00 30.00 2.00 rectstroke
+LF
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(-4.0) 4.00 0 1 50.71 13.00 TP
+(+4.0) 4.00 0 1 79.29 13.00 TP
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(µV) 4.00 0 1 65.00 13.00 TP
+%%EndObject
+%%BeginObject: (007 maplegend)
+0 1 PalS 148.00 15.00 1.36 2.00 rectfill
+1 1 PalS 149.36 15.00 1.36 2.00 rectfill
+2 1 PalS 150.73 15.00 1.36 2.00 rectfill
+3 1 PalS 152.09 15.00 1.36 2.00 rectfill
+4 1 PalS 153.45 15.00 1.36 2.00 rectfill
+5 1 PalS 154.82 15.00 1.36 2.00 rectfill
+6 1 PalS 156.18 15.00 1.36 2.00 rectfill
+7 1 PalS 157.55 15.00 1.36 2.00 rectfill
+8 1 PalS 158.91 15.00 1.36 2.00 rectfill
+9 1 PalS 160.27 15.00 1.36 2.00 rectfill
+10 1 PalS 161.64 15.00 1.36 2.00 rectfill
+11 1 PalS 163.00 15.00 1.36 2.00 rectfill
+12 1 PalS 164.36 15.00 1.36 2.00 rectfill
+13 1 PalS 165.73 15.00 1.36 2.00 rectfill
+14 1 PalS 167.09 15.00 1.36 2.00 rectfill
+15 1 PalS 168.45 15.00 1.36 2.00 rectfill
+16 1 PalS 169.82 15.00 1.36 2.00 rectfill
+17 1 PalS 171.18 15.00 1.36 2.00 rectfill
+18 1 PalS 172.55 15.00 1.36 2.00 rectfill
+19 1 PalS 173.91 15.00 1.36 2.00 rectfill
+20 1 PalS 175.27 15.00 1.36 2.00 rectfill
+21 1 PalS 176.64 15.00 1.36 2.00 rectfill
+0.00 0.00 0.00 0 0.100 1 LI
+149.36 17.00 149.36 15.00 LS
+150.73 17.00 150.73 15.00 LS
+152.09 17.00 152.09 15.00 LS
+153.45 17.00 153.45 15.00 LS
+154.82 17.00 154.82 15.00 LS
+156.18 17.00 156.18 15.00 LS
+157.55 17.00 157.55 15.00 LS
+158.91 17.00 158.91 15.00 LS
+160.27 17.00 160.27 15.00 LS
+161.64 17.00 161.64 15.00 LS
+163.00 17.00 163.00 15.00 LS
+164.36 17.00 164.36 15.00 LS
+165.73 17.00 165.73 15.00 LS
+167.09 17.00 167.09 15.00 LS
+168.45 17.00 168.45 15.00 LS
+169.82 17.00 169.82 15.00 LS
+171.18 17.00 171.18 15.00 LS
+172.55 17.00 172.55 15.00 LS
+173.91 17.00 173.91 15.00 LS
+175.27 17.00 175.27 15.00 LS
+176.64 17.00 176.64 15.00 LS
+LF
+0.00 0.00 0.00 0 0.200 1 LI
+148.00 15.00 30.00 2.00 rectstroke
+LF
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(-1.5) 4.00 0 1 149.36 13.00 TP
+(+1.5) 4.00 0 1 176.64 13.00 TP
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(µV) 4.00 0 1 163.00 13.00 TP
+%%EndObject
+%%BeginObject: (008 diagram Fz)
+0.00 0.00 0.00 0 0.150 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 96.167 def /len 1.000 def
+20.00 TD (-0.2) 3.00 0 1 20.00 95.57 TP
+51.43 TD (0.2) 3.00 0 1 51.43 95.57 TP
+67.14 TD (0.4) 3.00 0 1 67.14 95.57 TP
+stroke LF
+0.00 0.00 0.00 0 0.150 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 35.214 def /len 1.000 def
+123.33 AD 
+(-4.0) 3.00 3 0 34.61 123.33 TP
+110.00 AD (-2.0) 3.00 3 0 34.61 110.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.150 0 LI
+75.00 96.67 20.00 96.67 LS
+LF
+0.00 0.00 0.00 0 0.150 0 LI
+35.71 130.00 35.71 90.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Fz) 5.00 3 1 75.00 130.00 TP
+gsave
+/f_x 20.00 def /f_y 90.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 1.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.300 1 LI
+gsave
+2.000000e-03 -1.000000e-01 2.185746e-01 CuGS 2.345777e-03 -2.676381e-01 CuDec
+0 1 298 {CuPath} for
+=^50>@;'CnF*;hUI=$BhH$4=ME,KK/Ci+'.EcQ;EFEMVED/O-&B4bgjCMn3:I"?s+MMm@JKn4VpEc#N'
+@qK=dD/XN@H$jsbFDkbt;+EZ",T.1$"p+l."pb\Q(a(.X2*OK*>@qo,Nh*8_b15P<o_SLaqtK^Hj4Vbs
+]We?,Q&^QIGAq8-?!LH3<`W@.@VBV$H@^d+MM[.AIX#dF@Tc`-:J=MZ;H?t.?tO"aAn>CX>$"U!:ejkd
+=^5KQE-ZhaLP^tIMi!1BJ:N#pH[0s`H[C-dI!Bp\FE);:ChdWsB4bdhAS,I`@piVL>[1N??=d_dF*W7h
+LQ.:QMhck2Ec,Gq>$4j/>@M;bH@gs7PF%MuO,&:2DeNN`=]nm6@qfr~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.300 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -2.010811e-01 CuGS 1.593491e-03 -2.462168e-01 CuDec
+0 1 298 {CuPath} for
+^:_%d[^3<FZECF6XJi%mSt244O,SjKJV/H'It<0'JqSi1L5(A:L5C_GNg#`tSYDsXWMcYhTUV1-LP:/)
+H@(!jKT21aTVncjX/2PUN.,VM9g1-P((:BL!Wr`=(*>%`6;:TqF+B7=VR4+^fAPrap\Omer:omOk24b:
+`k]*iXJVb_S!T>&O-#EbPF%c6W3j.VcJ.@Eo(DkTqXj@DinVr(_7HqRVkTcPQ'@AfLk:)%FE2;8D/=02
+H$tC*PFA/AWN<8(XJr%kSsu+5Pa%>sPaRo.S"6(=R@0>'OcPE[MN!OSOHPfnQ^*o%PE1ZXKn"PsH?aa_
+IY!30NKBBjR$X2,Q'IJpOcPZgPaIo3Tr"WcWMuhnUS+0HQ^3f"PF%R~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.300 1 LI
+gsave
+2.000000e-03 -1.000000e-01 4.196557e-01 CuGS 1.300039e-03 -1.600027e-01 CuDec
+0 1 298 {CuPath} for
+,:P3'5"8@O?tjJ$G^Y$kJV&N+KnbD@NffQnR@Tk>S=>k0O,SjHIsu`mH[pX#Ll@FYQBmr)R$Nr"O,o6Y
+MMm@LM2I%BJU_lcD.[0Y<)67^928>a>%)&[Ecu_TI=6NiI!^6gJqT/KTW,E:ce.@Ho_JF`r;$!SkMk+A
+`kf*eVOa$2L3n#Z@piD=:ej\W91hlL91ME:4#AQ:*#8ti"9JW.$5+:)1-\E7@;U+4IXls"I=6?bFEM\I
+GBeLcJVT)@Nf]BdP*2#kP*1ujPED#kO-#?[Lkp_9J:;ooH[C*cH?jaXF)Gf,A7&YK?=7A]GCPX@V6[\M
+aN)B:\uVNdK5t[3=&W+#?tje:NLZiFYct1*SWAMKD.$LG;,gV(B6/G~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (009 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(positive (n=25)) 3.00 4 2 86.50 115.80 TP
+%%EndObject
+%%BeginObject: (010 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(negative (n=25)) 3.00 4 2 86.50 111.60 TP
+%%EndObject
+%%BeginObject: (011 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(positive - negative) 3.00 4 2 86.50 107.40 TP
+%%EndObject
+%%BeginObject: (012 line)
+0.00 0.00 1.00 0 0.300 1 LI
+85.00 117.00 80.00 117.00 LS
+LF
+%%EndObject
+%%BeginObject: (013 line)
+1.00 0.00 0.00 0 0.300 1 LI
+85.00 112.80 80.00 112.80 LS
+LF
+%%EndObject
+%%BeginObject: (014 line)
+0.00 0.00 0.00 0 0.300 1 LI
+85.00 108.60 80.00 108.60 LS
+LF
+%%EndObject
+%%BeginObject: (015 line)
+0.00 0.00 0.00 1 0.300 1 LI
+55.00 116.00 48.00 116.00 LS
+LF
+%%EndObject
+%%BeginObject: (016 line)
+0.00 0.00 0.00 1 0.300 1 LI
+48.00 72.00 48.00 116.00 LS
+LF
+%%EndObject
+%%BeginObject: (017 line)
+0.00 0.00 0.00 1 0.300 1 LI
+55.00 72.00 48.00 72.00 LS
+LF
+%%EndObject
+%%BeginObject: (018 line)
+0.00 0.00 0.00 1 0.300 1 LI
+55.00 72.00 55.00 116.00 LS
+LF
+%%EndObject
+%%BeginObject: (019 text)
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Legend:) 4.00 4 2 80.00 120.00 TP
+%%EndObject
+%%BeginObject: (020 text)
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Legend:) 4.00 4 2 80.00 120.00 TP
+%%EndObject
+%%BeginObject: (021 text)
+/CF1 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Legend:) 4.00 4 2 80.00 120.00 TP
+%%EndObject
+
+% -------------------------------------------------------------------
+% cleanup
+
+%%Trailer
+end 
+showpage
+%%EOF
