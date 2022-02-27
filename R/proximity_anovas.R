@@ -2,8 +2,9 @@
 
 library(dplyr)
 library(rstatix)
+library(ez)
 
-df <- read.csv("D:/IluAg/IluAg/means/proximiy.txt", row.names=NULL, sep="")
+df <- read.csv("D:/IluAg/IluAg/means/proximity-congruency.txt", row.names=NULL, sep="")
 
 # Rename the columns
 names <- c("experiment", "condition", "channel", "window", "mean", "subject")
@@ -20,21 +21,27 @@ df$window[df$window == "+310..+370"] <- "P3"
 # Reshape the data
 df[, "proximity"] <-
   NA
+df[, "congruency"] <-
+  NA
 
 for (iRow in 1:length(df$condition)) {
-  if (df[iRow, "condition"] == "TWonec") {
-    df[iRow, "proximity"] <- 0
-  } else if (df[iRow, "condition"] == "TWtwoc") {
+  if (df[iRow, "condition"] == "CLOSECONc") {
     df[iRow, "proximity"] <- 1
-  } else if (df[iRow, "condition"] == "TWthreec") {
+    df[iRow, "congruency"] <- 1
+  } else if (df[iRow, "condition"] == "CLOSEINCc") {
     df[iRow, "proximity"] <- 1
-  } else if (df[iRow, "condition"] == "TWfourc") {
+    df[iRow, "congruency"] <- 0
+  } else if (df[iRow, "condition"] == "FARCONc") {
     df[iRow, "proximity"] <- 0
+    df[iRow, "congruency"] <- 1
+  } else if (df[iRow, "condition"] == "FARINCc") {
+    df[iRow, "proximity"] <- 0
+    df[iRow, "congruency"] <- 0
   } 
 }    
 
 # Drop unnecessary columns
-keepers <- c("condition", "channel", "window", "mean", "subject", "proximity")
+keepers <- c("condition", "channel", "window", "mean", "subject", "proximity", "congruency")
 df <- df[keepers]
 
 # Convert to appropriate data types
@@ -43,6 +50,7 @@ df$channel <- as.factor(df$channel)
 df$window <- as.factor(df$window)
 df$subject <- as.factor(df$subject)
 df$proximity <- as.factor(df$proximity)
+df$congruency <- as.factor(df$congruency)
 df$mean <- as.numeric(df$mean)
 
 # Run four ANOVAs for the different components of interest
@@ -56,12 +64,75 @@ data <- N1
 
 # Summary statistics
 summary <- data %>%
-  group_by(subject, proximity) %>%
+  group_by(subject, proximity, congruency) %>%
   get_summary_stats(mean, type = "mean")
 
 # Run ANOVA
 data <- ungroup(data) # Ungroup so that aov can work# Run AOV
-aov <- anova_test(data = data, dv = mean, wid = subject, within = proximity)
 
-# Get results
-N1_aov <- get_anova_table(aov, correction = "none")
+anova = ezANOVA(
+  data = data
+  , dv = .(mean)
+  , wid = .(subject)
+  , within = .(proximity, congruency)
+)
+
+# P2 
+data <- P2
+
+# Summary statistics
+summary <- data %>%
+  group_by(subject, proximity, congruency) %>%
+  get_summary_stats(mean, type = "mean")
+
+# Run ANOVA
+data <- ungroup(data) # Ungroup so that aov can work# Run AOV
+
+anova = ezANOVA(
+  data = data
+  , dv = .(mean)
+  , wid = .(subject)
+  , within = .(proximity, congruency)
+)
+
+# P3a
+data <- P3a
+
+# Summary statistics
+summary <- data %>%
+  group_by(subject, proximity, congruency) %>%
+  get_summary_stats(mean, type = "mean")
+
+# Run ANOVA
+data <- ungroup(data) # Ungroup so that aov can work# Run AOV
+
+anova = ezANOVA(
+  data = data
+  , dv = .(mean)
+  , wid = .(subject)
+  , within = .(proximity, congruency)
+)
+
+# P3b
+data <- P3b
+
+# Summary statistics
+summary <- data %>%
+  group_by(subject, proximity, congruency) %>%
+  get_summary_stats(mean, type = "mean")
+
+# Run ANOVA
+data <- ungroup(data) # Ungroup so that aov can work# Run AOV
+
+anova = ezANOVA(
+  data = data
+  , dv = .(mean)
+  , wid = .(subject)
+  , within = .(proximity, congruency)
+)
+
+library(ggplot2)
+
+ggplot(P3a, aes(x=subject, y=mean)) +
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE)

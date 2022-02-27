@@ -1,0 +1,1083 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%LanguageLevel: 2
+%%DocumentData: Clean8Bit
+%%Pages: 1
+% $Id: sigmap.pps 1762 2008-03-14 13:15:30Z rsmies $
+
+%%Creator: xavr 2640
+%%CreationDate: Sat Feb 26 13:12:35 2022
+%%Title: ../cfg/xavr_selected_STEFANIE.cfg
+%%For: ssturm - 
+
+%%Orientation: Landscape
+%%BoundingBox: 0 0 595 842
+%%DocumentNeededResources: font Fixed Helvetica
+
+%%EndComments
+
+%%BeginProlog
+200 dict begin
+
+/InitPageGS {
+  72 25.4 div dup scale                  % set gs units to mm
+  PageX PageY translate                  % handle paper size/orientation
+  PageAngle   rotate
+  0 setlinecap
+  true setstrokeadjust
+} def
+
+
+% the "Print Current View" option - clip the visible region
+% and fit it centered into the given physical paper sheet extents
+/InitViewGS {
+  % undo the "shift to upper edge" in portrait orientation
+  PageAngle 0 eq {
+    0 PageY neg translate
+  } if
+
+  % find effective sheet size (without margins)
+  /swm SheetW PlotViewMargin 2 mul sub def
+  /shm SheetH PlotViewMargin 2 mul sub def
+  
+  % scale view to fit height or width, whichever is smaller
+  swm ViewW div shm ViewH div lt {
+    % fit width, center height
+    /vscale swm ViewW div def
+    PlotViewMargin PlotViewMargin shm ViewH vscale mul sub 2 div add translate
+  } {
+    % fit height, center width
+    /vscale shm ViewH div def
+    PlotViewMargin swm ViewW vscale mul sub 2 div add PlotViewMargin translate
+  }
+  ifelse
+  vscale dup scale
+  ViewX neg ViewY neg translate
+  ViewX ViewY ViewW ViewH rectclip
+} def
+
+/InitFieldGS {
+  /s_per_mm f_tmax f_tmin sub f_width  div def  % scale mm to diagram coords
+  /u_per_mm f_ymax f_ymin sub f_height div def
+  /mm_per_s 1.0 s_per_mm div def
+  /mm_per_u 1.0 u_per_mm div def
+  f_x f_y translate                               % locate field (in mm)
+  mm_per_s mm_per_u scale                         % set diagram scales 
+  0 f_tmin sub 0 f_ymin sub translate             % and diagram origin
+} bind def
+
+/ClipFieldGS {
+  f_tmin                                     % clip to width, 20 * height
+  f_ymin f_ymax f_ymin sub abs 10 mul sub
+  f_tmax f_tmin sub
+  f_ymax f_ymin sub abs 21 mul
+  rectclip
+} bind def
+
+% EPS file inclusion frame
+% from the Adobe PostScript Language Reference Manual
+/BeginEPSF { 
+  /b4_Inc_state save def
+  /dict_count countdictstack def
+  /op_count count 1 sub def
+  userdict begin
+  /showpage {} def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [] 0 setdash newpath
+  false setstrokeadjust false setoverprint
+} bind def
+
+/EndEPSF {
+  count op_count sub {pop} repeat
+  countdictstack dict_count sub {end} repeat
+  b4_Inc_state restore
+} bind def
+
+% fit epsf bounding box into xavr object field
+/FitEPSF {
+  % debug - outline xavr field
+  %0 0 field_w field_h rectstroke
+  %0 0 2 2 rectfill
+  
+  /bbox_w bbox_urx bbox_llx sub def
+  /bbox_h bbox_ury bbox_lly sub def
+  field_x field_y translate                     % to xavr field lower left
+  field_w 2 div field_h 2 div translate         % to xavr field center point
+  
+  % fit total x-extent of rotated bbox into xavr field width
+  field_w bbox_w bbox_ang cos abs mul bbox_h bbox_ang sin abs mul add div
+  % same for y or copy x scaling
+  bbox_fit {
+    field_h bbox_w bbox_ang sin abs mul bbox_h bbox_ang cos abs mul add div
+  } {
+    dup
+  } ifelse
+  scale
+
+  bbox_ang rotate
+  bbox_w 2 div neg bbox_h 2 div neg translate  % back from center to lower left
+  bbox_llx neg bbox_lly neg translate          % handle bbox origin
+  
+  % debug - outline EPSF bounding box in the transformed system
+  %1 0 0 rgb2cmyk 
+  %bbox_llx bbox_lly bbox_w bbox_h rectstroke
+  %bbox_llx bbox_lly 10 10 rectfill
+} bind def
+
+% to ease subsequent processing, only the CMYK ad GRAY color models
+% are used, no RGB
+% xavr supplies RGB components but they are transformed into its
+% complementary CMYK components here
+/rgb2cmyk {
+  /_blue  exch def
+  /_green exch def
+  /_red   exch def
+
+  _red _green add _blue add 0.0 eq {
+    0 0 0 1
+  } {
+    1 _red sub 1 _green sub 1 _blue sub 0 
+  } ifelse
+
+  setcmykcolor
+} bind def
+
+
+/MMstroke {
+  % set CTM from field coords to mm, set linewidth, restore field coords
+  s_per_mm u_per_mm scale stroke mm_per_s mm_per_u scale
+} bind def
+
+
+% decode/render the diagram traces 
+/CuGS {
+  % period t0 y0 ==> (empty)
+  translate
+  dup 1 scale /Period exch def
+  currentlinecap 1 eq { 1 setlinejoin } if 
+%  1 setlinecap
+  newpath 0 0 moveto
+} bind def
+
+/CuPath {
+  % (file) filter, (int) control -> (file) filter
+  1000 mod 0 eq {CuStroke} if         % avoid path overflow
+  dup read pop                        % preserve file, ignore status while reading
+  CodeScale mul                       % calc the real difference vector from encoding
+  CodeOffset add
+  1 exch rlineto
+} bind def
+
+/CuStroke {
+  currentpoint                        % note start point for next section
+  1 Period div 1 scale                % back to field units
+  MMstroke                            % back to mm, stroke, back to field
+  Period 1 scale                      % continue path in samples
+  moveto
+} bind def
+
+/CuDec {
+  /CodeOffset exch def
+  /CodeScale  exch def  
+  currentfile /ASCII85Decode filter
+} bind def
+
+% sensor dot plot in map objects
+% (a white filled circle, surrounded by a line in current style)
+/Sens {
+  % x y r ==> (empty)
+  0 360 arc closepath gsave 1 setgray fill grestore stroke
+} bind def
+
+/ScaleDash {
+  % linewidth dash_array ==> dash_array
+
+  /sc_array  exch def
+  /sc_factor exch def
+  /out_array sc_array length array def
+  /is_round currentlinecap 0 gt def
+
+  0 1 sc_array length 1 sub {
+    dup /sc_index exch def
+    sc_array sc_index get sc_factor mul  % scale each entry with the linewidth
+
+    is_round {                           % round/proj cap forces drawn lines to
+      sc_index 2 mod 0 eq                % be longer then given - therefore
+        { sc_factor sub                  %   shorten the drawn parts
+          dup 0.0 lt {0 exch pop} if }   %     (but avoid negative lengths)
+        { sc_factor add }                %   enlarge the empty parts
+      ifelse
+    } if
+    out_array 3 1 roll put
+  } for
+  out_array
+} bind def
+
+% was LStyleInitGS
+/LI {
+  % red green blue dashindex linewidth linecap ==> (empty)
+  gsave
+  setlinecap
+  dup
+  setlinewidth
+  exch
+  DashList exch get
+  % scale the dash pattern array if required
+  dup length 1 gt {ScaleDash} {exch pop} ifelse
+  0 setdash
+  rgb2cmyk
+} bind def
+
+% was LStyleFreeGS
+/LF {
+  grestore
+} bind def
+
+/ALIGN_CENTER 0 def
+/ALIGN_TOP    1 def
+/ALIGN_BOTTOM 2 def
+/ALIGN_RIGHT  3 def
+/ALIGN_LEFT   4 def
+
+% was TStylePlot
+/TP {
+  % text tsize tah tav x y  ==> (empty)
+  /ty exch def
+  /tx exch def
+  /tav exch def
+  /tah exch def
+  0.7 mul /tsize exch def              % ignore font descent for positioning
+  /ttext exch def
+  ttext stringwidth pop /twidth exch def
+  tah ALIGN_CENTER eq {
+    /tx tx twidth 0.5 mul sub def
+  } if
+  tah ALIGN_RIGHT eq {
+    /tx tx twidth sub def
+  } if
+  tav ALIGN_CENTER eq {
+    /ty ty tsize 0.5 mul sub def
+  } if
+  tav ALIGN_TOP eq {
+    /ty ty tsize sub def
+  } if
+  tx ty moveto ttext show
+} bind def
+
+/std2iso {
+  % font ==>  font
+  dup length dict begin
+    {1 index /FID ne {def} {pop pop} ifelse} forall
+    /Encoding ISOLatin1Encoding def
+    currentdict
+  end
+} bind def
+
+% draw gray
+/DG {
+  %   x width grayindex ==> (empty)
+
+  GrayScale exch get setgray
+  y exch height rectfill
+} bind def
+
+% time axis div
+/TD {
+  %   x ==> (empty)
+  y1 moveto 0 len rlineto
+} bind def
+
+% ampl axis div
+/AD {
+  %  y ==> (empty)
+  x1 exch moveto len 0 rlineto
+} bind def
+
+% line 
+/LS {
+  % x2, y2, x1, y1   ==>  (empty)
+  moveto lineto stroke
+} bind def
+
+/PalS {
+  % colorindex mapindex ==> (empty)
+  Pal exch get
+  exch get dup 0 get exch dup 1 get exch 2 get rgb2cmyk
+} bind def
+
+/InstitutionLogo [(EEProbe)(A.N.T. Software)] def
+/SetPos {
+  gsave translate
+} bind def
+/sBB {                                  % get bounding box of string
+  gsave
+  0 0 moveto
+  dup false charpath                    % string not removed from stack
+  flattenpath pathbbox                  % ll.x, ll.y, ur.x, ur.y  on stack
+  grestore
+} bind def
+/sH {                                   % get height of string
+  sBB
+  4 1 roll pop pop pop
+} bind def
+
+/DrawLogo {
+  11 5 translate
+  /Helvetica findfont 3 scalefont setfont
+  /logoW 0 def
+  dup {                                 % get width of longest string
+    stringwidth pop dup logoW ge {/logoW exch def} {pop} ifelse
+  } forall
+  0 logoW 2 div add 1.5 add -5 SetPos   % set coord. (0,0) at center of logo
+  1 setgray
+  logoW 2 div neg 1.5 sub -2
+  logoW 3 add 4 rectfill               % clear area
+  0 setgray
+  dup 0 get
+  dup stringwidth pop 2 div neg 0 moveto show   % print upper string centered
+  /Helvetica findfont 2.7 scalefont setfont 
+  (Z) sH /logoFh exch def pop                 % get height of lower string
+  1 get
+  dup stringwidth pop 2 div neg logoFh neg 0.7 sub moveto show     % print lower string centered
+  grestore
+} bind def
+
+/DrawFrame {
+  gsave
+  0 setgray 0.30 setlinewidth [] 0 setdash
+  frame_x frame_y translate
+
+  % => the next 2 lines may be commented out to disable the drawing of ...
+  0 0 frame_width frame_height rectstroke    % the frame around the whole diagram
+  InstitutionLogo DrawLogo                               % the institution logo
+  grestore
+} bind def
+
+/DrawFrameMPI_CNS {
+  gsave
+  12 dict begin
+  /MPItext  (A.N.T Software) def
+  /blueLW    2.5 def     % width of blue part of frame
+  /yellowLW  0.36 def    % width of yellow part
+  %isLaserPrinter {
+  %   /MPIblue   {0.5 0.5 0.5 rgb2cmyk} bind def
+  %  /MPIyellow {0.8 0.8 0.8 rgb2cmyk} bind def
+  %  currentscreen 3 -1 roll pop 150 3 1 roll setscreen
+  %} {
+    /MPIblue   {0 0 0.52 rgb2cmyk} bind def
+    /MPIyellow {1 1 0 rgb2cmyk} bind def
+  %} ifelse
+  /FontMPI1  /Times-Roman findfont 3.121 scalefont def
+  /MPIF1 {FontMPI1 setfont} bind def
+  /FontMPI2  /Times-Roman findfont 4.161 scalefont def
+  /MPIF2 {FontMPI2 setfont} bind def
+  blueLW 2 div dup frame_x add exch frame_y add translate
+  [] 0 setdash 0 setlinecap 0 setlinejoin MPIblue blueLW setlinewidth
+  0 0 frame_width blueLW sub frame_height blueLW sub rectstroke
+  MPIyellow yellowLW setlinewidth
+  yellowLW 2 div blueLW 2 div add dup
+  blueLW 2 mul yellowLW add dup frame_width exch sub exch frame_height exch sub rectstroke
+  MPIblue MPIF1 /largeChar 0 def
+  frame_width blueLW 2 div sub -5 moveto
+  MPItext length 1 sub -1 0 {
+    dup MPItext exch get 94 eq {
+      MPIF2 /largeChar 1 def pop
+    } {
+      MPItext exch 1 getinterval
+      dup stringwidth pop neg dup 0 rmoveto exch show 0 rmoveto
+      largeChar 1 eq { MPIF1 /largeChar 0 def } if
+    } ifelse
+  } for
+  grestore
+
+  % scale whole diagram to fit into the reduced inner space
+  blueLW yellowLW add dup dup translate
+  2 mul frame_width div 1 sub neg dup scale
+
+  end
+} bind def
+
+
+% arrow object plot method
+
+/AS {
+  % x2, y2, x1, y1, len, ang   ==>  (empty)
+
+  /arr_ang exch def
+  /arr_len exch def
+  /arr_y1  exch def
+  /arr_x1  exch def
+  /arr_y2  exch def
+  /arr_x2  exch def
+  
+  % calc vector length, angle, arrow width from passed params
+  /arr_totlen 
+    arr_x2 arr_x1 sub dup mul 
+    arr_y2 arr_y1 sub dup mul add sqrt 
+  def
+  /arr_sinphi
+    arr_y2 arr_y1 sub arr_totlen div
+  def
+  /arr_cosphi
+    arr_x2 arr_x1 sub arr_totlen div
+  def
+  /arr_h 
+    arr_len arr_ang 2.0 div dup sin exch cos div mul
+  def
+  
+  % substract arrow head length from linelength and draw the shortened line
+  arr_x1 arr_y1 moveto
+  arr_totlen arr_len 0.99 mul sub arr_cosphi mul
+  arr_totlen arr_len 0.99 mul sub arr_sinphi mul
+  rlineto stroke
+  
+  % calc and draw the arrow head triangle
+  arr_x2 arr_y2 moveto
+  arr_len arr_cosphi neg mul arr_h arr_sinphi neg mul sub arr_x2 add
+  arr_len arr_sinphi neg mul arr_h arr_cosphi neg mul add arr_y2 add
+  lineto
+  /arr_h arr_h neg def
+  arr_len arr_cosphi neg mul arr_h arr_sinphi neg mul sub arr_x2 add
+  arr_len arr_sinphi neg mul arr_h arr_cosphi neg mul add arr_y2 add
+  lineto fill
+  
+} bind def
+
+% obsolete arrow functions for PostScript hackers
+% replaced by xavr's arrow object (see above) which is implemented 
+% without "rotate" since some including appications cannot 
+% handle "odd" rotation angles
+
+/Arrow {  
+%   x0 y0 x1 y1 half_linewidth half_headwidth headlength ==> (empty)
+
+        13 dict begin
+        /Headlength exch def
+        /Halfheadthickness exch 2 div def
+        /Halfthickness exch 2 div def
+        /Tipy exch def
+        /Tipx exch def
+        /Taily exch def
+        /Tailx exch def
+        /Dx Tipx Tailx sub def
+        /Dy Tipy Taily sub def
+        /Arrowlength Dx Dx mul Dy Dy mul add sqrt def
+        /Angle Dy Dx atan def
+        /Base Arrowlength Headlength sub def
+        /Savematrix matrix currentmatrix def
+        
+        Tailx Taily translate
+        Angle rotate
+        0 Halfthickness neg moveto
+        Base Halfthickness neg
+        lineto
+        Base Halfheadthickness
+        neg lineto
+        Arrowlength 0 lineto
+        Base Halfheadthickness lineto
+        Base Halfthickness lineto
+        0 Halfthickness lineto
+        closepath
+        
+        Savematrix setmatrix
+        end
+} bind def
+
+/FilledArrow {
+  gsave
+  0 setlinewidth newpath Arrow fill
+  grestore
+} bind def
+
+%%EndProlog
+
+% -------------------------------------------------------------------
+%%BeginSetup
+
+
+% prepare page extents
+/PlotView 0 def
+/PageX 210.00 def
+/PageY 0.00 def
+/PageAngle 90.00 def
+
+% prepare fonts (ISO-Latin1 encoding + scaling
+%%IncludeResource: font Fixed
+%%IncludeResource: font Helvetica
+/Fixed findfont 2.00 scalefont std2iso /CF0 exch definefont pop
+/Helvetica findfont 1.50 scalefont std2iso /CF1 exch definefont pop
+/Helvetica findfont 5.00 scalefont std2iso /CF2 exch definefont pop
+/Helvetica findfont 3.00 scalefont std2iso /CF3 exch definefont pop
+/Helvetica findfont 1.20 scalefont std2iso /CF4 exch definefont pop
+
+/DashList [
+[]
+[1.00 0.80 ]
+[4.00 1.00 ]
+[4.00 1.00 1.00 1.00 ]
+[4.00 1.00 1.00 1.00 1.00 1.00 ]
+[8.00 1.00 ]
+[8.00 1.00 4.00 1.00 ]
+[]
+[]
+[]
+] def
+
+/Pal [
+] def
+/frame_x 18.00 def /frame_y 9.00 def
+/frame_width 261.00 def /frame_height 192.00 def
+
+% significance grayscale colors
+/GrayScale [1.00 0.62 0.38 0.12] def
+
+%%EndSetup
+
+% I know, it should read %%Page: 1 1 or so, but my favourite previewer
+% is confused then. Strange.
+%%Page: 1
+%%BeginPageSetup
+InitPageGS
+PlotView 1 eq {
+  InitViewGS
+} if
+%%EndPageSetup
+
+% -------------------------------------------------------------------
+% draw the particular fields
+
+%DrawFrame
+%DrawFrameMPI_CNS
+%%BeginObject: (000 diagram Fz)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 164.500 def /len 1.000 def
+116.00 TD (-0.2) 3.00 0 1 116.00 163.90 TP
+147.43 TD (0.2) 3.00 0 1 147.43 163.90 TP
+163.14 TD (0.4) 3.00 0 1 163.14 163.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 131.214 def /len 1.000 def
+185.00 AD 
+(-4.0) 3.00 3 0 130.61 185.00 TP
+175.00 AD (-2.0) 3.00 3 0 130.61 175.00 TP
+155.00 AD (2.0) 3.00 3 0 130.61 155.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+171.00 165.00 116.00 165.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+131.71 190.00 131.71 150.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Fz) 5.00 3 1 171.00 190.00 TP
+gsave
+/f_x 116.00 def /f_y 150.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -3.673393e-01 CuGS 1.499207e-03 -2.203897e-01 CuDec
+0 1 298 {CuPath} for
+XKJh5['[0GY,eFnR?innM2@%IO-?!%Unt&hW1ooLOG/()D/*ZqBQ&!BL6J(%W3<D,WhPuFKRIfS@UEDJ
+@;'S'J;K;QS"#t9Q&LEAE+2j@4u=Z2(D.&Z"T\],#n.If-o+.d@;g^YTWGfGdFdI@mI9fCqYU6irV?6[
+m,QjG_6p/-NIQ4mDJO34I>3oXX1Q<sfA5BCi7li0ahkZtYcOe$V50o]US+3JQ]dA`K7.udEc,i6EcZDO
+IY<H7N009cPEM)iOGo3XN/N[TOHGcoS"6:LVlQo&YHb:8Y,nV#U7dsBPE:]ZKS"Z$G^"1KDej*$A7f:^
+@qK=fCiOTAIY*93N00<hQ^F82S=Q7CTV/!QTVJ3RTUqaFS"#e7R%0T~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 1.334034e-01 CuGS 1.814782e-03 -2.611350e-01 CuDec
+0 1 298 {CuPath} for
+N/WRLM2."IN/s$^O-5N`Mhm+=JUMrpI=[!,N0BX$Uo(5pY,\LuTUV.,Lk^G1I=H]uL51eMPEhH$Q^3l#
+OH>H]N/WaTO,]3ZMhZh0EbAZT69$J;(CUTP!s&W6',`)L4@rL^DgmS3Up@_WeDTN[o_\RcqtK^Iiml8e
+Z_a(LK6_NRBk1jhCiFZOMjU6D]ZAX[kjA';p\4:HkM4Y2_RHbIU77R8P`UueN/<7>H$*t8?s$E*;,LA!
+ASujNPbP4e]tqV'^:1>CS<8VUG]7V;Df0ZAI"I'0N/imXMi*7CJq8K&K7er:NKKBhQBmc!O,SjIIsu]i
+H[:3oLl@OaSY)^SVl$8`T:;+/NJ`ICJUN#pI!^6fI=-QrK8#2@Od)4~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -5.007427e-01 CuGS 8.247143e-04 -1.150308e-01 CuDec
+0 1 298 {CuPath} for
+^WFgOf[nZu`jr=JR#cuVKSkk]VR=.\d*U+V\>"t'=?\,I#lt/;)_t'!L8)6)guIDKb.44#DH&kS,T\'S
+0L&9?EIj(9S=uRHRZinmNJ`g\R\Had\\,bq]tC\RU7.1#J:;]eFE_hMEcZ)4@UE/6:/"AZ>@_i0R&n*P
+iUH[?rqZ*EfZ1ItR#$03CLgjW=]A9l7m]6q0J4n.0/bsa;djQiLQImoTqA$MS=,e5S=lgb\])bCg"b3.
+`jhe)G[O0'-QX'A*\0<HAUBW>]Z\scjlY[^h:0ira2Z*;`lH0A`koHsXIkZ1GALSf:.n)K8ki5c?"%5T
+AS#:V=&i!h84Z9E:f^q;Edrt4TrYT7`6$?Qe'udnbf[i;\#lU$Q]I"~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (001 diagram Cz)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 114.500 def /len 1.000 def
+116.00 TD (-0.2) 3.00 0 1 116.00 113.90 TP
+147.43 TD (0.2) 3.00 0 1 147.43 113.90 TP
+163.14 TD (0.4) 3.00 0 1 163.14 113.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 131.214 def /len 1.000 def
+135.00 AD 
+(-4.0) 3.00 3 0 130.61 135.00 TP
+125.00 AD (-2.0) 3.00 3 0 130.61 125.00 TP
+105.00 AD (2.0) 3.00 3 0 130.61 105.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+171.00 115.00 116.00 115.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+131.71 140.00 131.71 100.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Cz) 5.00 3 1 171.00 140.00 TP
+gsave
+/f_x 116.00 def /f_y 100.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -2.212357e-01 CuGS 1.201301e-03 -1.724845e-01 CuDec
+0 1 298 {CuPath} for
+\$rfSZa6j<W26/VQ][>dMMR.INK'-cPa7MpN.l_(DIm-X<EE7/B6&N]Su]?<aj&&O^U0c#Jo>$o6TmCe
+3^6,4>\A&#I=H]iEbAQN4u+B#&.&F@!X/l?'cSDJ1,hHe9iG;+D018aPb+n]^;nUPhrX.mo(W"XrVcZi
+p[7>(eB#8(TTY(YF`MJAG^kR9U9VAQdG!C6h:pK*`kSsfWiDtqW3!2-[C*EKYc4FdP_ap:F`;;<EclbZ
+LQ%4UOcG?QHus(2=]8$h92\euBQo#eR\?gf[C*HJYGS(bP`gr^LPU\BMi3UVN/iaMIsc?TAme_B;,U4i
+=C#KRG(,7.R@g=UXfnt4YH=e&VP9fVTV%jMUSOfeXKJe4['I'EYck)~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 5.930719e-01 CuGS 1.675355e-03 -2.357554e-01 CuDec
+0 1 298 {CuPath} for
+GB%J6An5F_Anc""F*Dq[J:rZ3M2I1MN003eQ^XJ<USF`aVkp5_T:2.2OH#0ULP^eDLl@7ON/ijUMi!7E
+Kn=o,Isl`kGB@e=@pDr(5Vjr6(_-oV!s/Q1$ksX-/j)U$?>=\8OIW8V_9CNjl1=WHrVcQbmcN6O`Oi:M
+R[&ngLOt/1KnbGDNg6$&UStE)^;eFJh;mefnF5r6kMOt;`O`:PSskh(NJi^OMM?n<I<faG@9?E"779L3
+9N,52Fb>dEUT:Q$XJ_VRM0j5Q?<1!&<E`gIFb5L:S"ujXU7dm:Lk'\hC1h*eB4u+$G'\XhKnP25KRnZ(
+IY*3/NKfp/WjTFQ`5Td6_Rd.XUnF';N/37DKSYDBNKB6cP*1ogN/<;~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -8.143076e-01 CuGS 9.077255e-04 -1.200782e-01 CuDec
+0 1 298 {CuPath} for
+i9Tt/rVcTdmGujA]W\-!Oc>0RLPgqILkgP)DI-+'/g1r<#R_.b/jiodOJfh:gYUc<aLIq%E*Gad,TRa@
++tP`H=_i;=P+A;EVlH\pW2lr&Zam`fa3N#XcHO5@Z`'CTJota2;+3T'.O,oN'GM2t*@N^1<GHuKXMWHJ
+n+ZVMmbcI*Wg&$M>u*pR4?P_l6UjX>84>g+1b^@,,q:K+6W.B6Kp&14Zb!]Y[BZa0USFWbZ+S--hs9b(
+n*8ZLYEsH=5U[<Q!<ilR1f&"KWlEi^q#'mThp/a,NdbkY@:X%oJrl\1]Z87Ab/CijS;MW-?;jNd7Rg!D
+<**:2?sm;E=&;X`7R]d<:/tV6Edib+R\-IUX/`5#W2Z\mWMuu&YI(V~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (002 diagram T7)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 114.500 def /len 1.000 def
+50.00 TD (-0.2) 3.00 0 1 50.00 113.90 TP
+81.43 TD (0.2) 3.00 0 1 81.43 113.90 TP
+97.14 TD (0.4) 3.00 0 1 97.14 113.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 65.214 def /len 1.000 def
+135.00 AD 
+(-4.0) 3.00 3 0 64.61 135.00 TP
+125.00 AD (-2.0) 3.00 3 0 64.61 125.00 TP
+105.00 AD (2.0) 3.00 3 0 64.61 105.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+105.00 115.00 50.00 115.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+65.71 140.00 65.71 100.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(T7) 5.00 3 1 105.00 140.00 TP
+gsave
+/f_x 50.00 def /f_y 100.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -9.257350e-02 CuGS 5.697148e-04 -6.745842e-02 CuDec
+0 1 298 {CuPath} for
+DL-ttR\Ha]Wi2VZO+_k!BjtFT?t!_bEd)nYI=$'SAR//+5s@@m5tP$aEe0@GWj]IM\$)QkJ8\RZ1a3_D
+"p4r3$5+*q+XSK^+W_I2$j?_7"Uc%j1J2"tO/BP7h<FCunESlZ_R#nqIr8^r:IdiA6qL$N>%25gIYErP
+UoUi6^W+:9ai)$+Ybd_EHu!%`5rL5=*uuCG.53nT=Cu`0P+en_]=l"m]!/3+PD=R-Bk:[]@Vg(9Nh<Mj
+dbaBbqYp?al.sOnU5sS2;F<>m-6XW^/2TO\;d3gKEclPMF`_S=C1q0kBP_[6JVfV[V5UT%XfJ1bN.>kV
+;ai]%.4HYr1H\3+@Vg=AN/s3gP*(ZWJ9uH\DfBZ9Fa8CaKS5)3K6qk~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 3.872968e-01 CuGS 7.846054e-04 -1.182949e-01 CuDec
+0 1 298 {CuPath} for
+d*'2/T8[u*;+!5q.kWS?8Q]\NM3jp;YdLjEXfJ7jS!]V1S"67MW3!)%W2#oIN.?7pDes93H%h9MWOBO[
+`l#KpT8n&%8MMA##6Fu5'dGV0@X!j)ZG"E.e(E4$da$(X`l,[-]=G;QW2#lINJN7<JV&Z8QCOnY\&$&&
+a2,HpX.PZ7K6qldH$b-uOHuH2USOTSQ&UECEGB&m@Ua%hH%V'DTWGE,]=Y\e]!f,X\\#_td+@1>nb)kY
+rV,sJhU00GUQgOZEG&ij@:EncFErLoOd2E-TVJ3VU8+EYV5LE![^j5ma3)HA]X=Z)L36p#5;+?+*?Zde
+7942RPGGS"`5op4\#Z3fMh?P/K8>\]X1,sidaHOb^p'PoJ8o((=B8`~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -4.798703e-01 CuGS 8.595559e-04 -1.033305e-01 CuDec
+0 1 298 {CuPath} for
+5"f1$LnD,tg#h\gm,?O9[\T.>GAC\r>[LlKB520tB4bOS;GB\L77U'T@s*HkVR=1ZahtcnRY,ET3@5IG
+!s&`F-U1UNLRt`__oBL#WKr6V?;3^G1H.?`:L7g`Kp%jnT:21/MLg%oCh[HmAS>amCi!m&AnGFY?!goL
+CNFu`Q_gpt_SjI1]<J#nK5b=#84#I%5t+RRATWE[Pb+SGVl$8_S!K.nKRS/dCM$pU;+j5?3ArWM2EX9"
+=(QH(OIN8V\A,hm]!A<,ObS-uA6Mu/:/+P_=Bo<HCM[p*CM%$Z<D>tP6:4=@>AJYIVRb%1meHbYpZ^DM
+XHRj98N84E+snm*942^kOIMr<SsP:^CgKt,5W_8$;djd#Q_^mq\[JX~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (003 diagram Pz)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 64.500 def /len 1.000 def
+115.00 TD (-0.2) 3.00 0 1 115.00 63.90 TP
+146.43 TD (0.2) 3.00 0 1 146.43 63.90 TP
+162.14 TD (0.4) 3.00 0 1 162.14 63.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 130.214 def /len 1.000 def
+85.00 AD 
+(-4.0) 3.00 3 0 129.61 85.00 TP
+75.00 AD (-2.0) 3.00 3 0 129.61 75.00 TP
+55.00 AD (2.0) 3.00 3 0 129.61 55.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+170.00 65.00 115.00 65.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+130.71 90.00 130.71 50.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Pz) 5.00 3 1 170.00 90.00 TP
+gsave
+/f_x 115.00 def /f_y 50.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -4.260758e-01 CuGS 7.702065e-04 -1.253967e-01 CuDec
+0 1 298 {CuPath} for
+nFQ8Bna,JugX46`^:CSVZEUaD\%0#Y[B?HtP(@^b<_,D42)IEa<b?fFXMNNPoDJR^n(u6nQ[N:50HUc1
+!<WT>*@a'<;d<jFBOkFL9L1Ne,97X>)'L@]4@i@YBlnZQK8>59K7A;nG&_M>E,]iAI"@0;R\d-u_p@#p
+l0n6<o^qM6h9sBTY+_2?LOaf%JV8uISZ/s0aO/]"kNhX-p%7tNp@RqHmd99$io&SEf$r0teC3(&gYCT=
+f[A!Y[\T4CEar'<4?#,V5"SjiIZUM>cJ7aVq>0mXmGcjHa1o0mZ`pjE\[fDd]XY8KTpCRbE+WBT;GU4l
+@;0q=P+Jb]]tVCu]<eN0QAU<?GB7qOJVfYeYJ8?7jm;X6q=aFIj4hl~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 5.213339e-01 CuGS 8.516169e-04 -1.304421e-01 CuDec
+0 1 298 {CuPath} for
+C1^jZ?!CW@@V'.eDJsT;G^4XcK85JNSYWHu^rapRf@ed&bJCQaRZ)c<Bk(IS?!q;^Fa]"(OHl,qP)=s@
+F)5>j<_uL^7n,g45!1\W.O#fF$jQk9"9oDT-8S(kBR,Q)Wj]^bd+$b$gY(90d`feI\ZVftObA""AmnqH
+>$GELE.!A&R]!6q\\>kr_8O72aii)`hW=+pq>:-gq=O(6gX!mP[]lm8Xg#1B]tV=t]sXu8P_OBr?WL!#
+;d3jXLRbQbeDfofq"4(<gs<gFWM5lMQ_'nNZFn,ud*U1``k&INQ]$97CM.'a?t3b]CMn$/DJX$!@UWSN
+@qT_+L6eXD`RWo5o(VhJlJL%-ZD3S8G]%)&?t3ecF+&b&Q^sqOWiiK~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -9.474097e-01 CuGS 1.107860e-03 -1.637985e-01 CuDec
+0 1 298 {CuPath} for
+mI^/Kq=aCHjPSM7aMP^'\[JuS['-X/T9G"TBNdng/0uAY+Y#?A>]l%(^XD<8r;?H]jjClAP^@.J8jba*
+5Y4gZCNtPpS>3*cZ*:L8Y,eS#W2HSkWi2koVP0TKPDb'?Ebf,f<),tQ6:!k&77p?W@;L1EPbth*dbX0X
+pA"CSlf6R=\uhK`K6;*C@9Zo:=]\d0?!LfHAnQ"%H@Um8S"m'i\@TAc]!efDUnO?LS=uga]#E.Rl1"99
+mcN*<Y*43=7P>_j"p"o;)D+3UCk7nKZ+I`b]=4r?SX,@rN/WpeTr>B4`lc]Wd*0SG[]H9nP)P3NKnbGB
+OHPopR$3YjJpVKO?rp6#9hnMf?u:1EQD1_!ajJbrhVHu<d`TM@ZE0f~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (004 diagram T8)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 114.500 def /len 1.000 def
+182.00 TD (-0.2) 3.00 0 1 182.00 113.90 TP
+213.43 TD (0.2) 3.00 0 1 213.43 113.90 TP
+229.14 TD (0.4) 3.00 0 1 229.14 113.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 197.214 def /len 1.000 def
+135.00 AD 
+(-4.0) 3.00 3 0 196.61 135.00 TP
+125.00 AD (-2.0) 3.00 3 0 196.61 125.00 TP
+105.00 AD (2.0) 3.00 3 0 196.61 105.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+237.00 115.00 182.00 115.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+197.71 140.00 197.71 100.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(T8) 5.00 3 1 237.00 140.00 TP
+gsave
+/f_x 182.00 def /f_y 100.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -5.186762e-02 CuGS 7.482012e-04 -9.135613e-02 CuDec
+0 1 298 {CuPath} for
+\@/]BTpCXfG]@J4BPMF,H%1L'Lkpb7G]./!;bT\K6:OLB<aKBTEd2eSG'%V:Amo"Q?"7G^Ed)n]Jq&/i
+BjOM"/gD&=!s8Z2&fiG_7os/;F*MtQE+`NV8N\m]-mBfW+se]j2*!rn9ikV6EI<V0UU.b^gZJ&"r;HQg
+oBYGgd)EZ)XJ_b^R$3PcJTl$@=@k\2-QO!:&eu<1/j2g3C4(l*UTV)?`6-?Rf%]-Cl0[p0o'Yi'fugt,
+Q\'*\90=sY-71)p2apPLCNb>ePEq],S!oY/PECuhP*2,tS"61GUSOWZTq7gBP`UcWI<TU?>Z"!Q1+=@c
+)&F56-SdeX=(ZK"Jr#2;JU2<K?WU$!9N,#'E.<n<X0fOS^::>@P(@T~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 2.796605e-01 CuGS 9.387888e-04 -1.152227e-01 CuDec
+0 1 298 {CuPath} for
+DK9lCH$OUWEGK/l=AV[^7n60K=CH)kKo_XpVl6VlTp^srH#R;!<)-(V8k;]P<**7.?smGOA7B+]BkhX1
+H@U[)Mi3LKIsGj?<(T/*-6O6H*?Zda4%)_@='Aa+9ggok*u#%d!<`]D+uW&%H',#<cen![q#1-hqYBmY
+p%7tNp\4@Qmc`NU`O2M*J8emn7Q`O]/hAP,0JYOE3]TAe6:4C@=^PuhK92V%YdqNa_S<[iXJD>MNJ<+:
+JqJf9OHu<.USargVP^,]SXPt5Pa.MuQBdf$QB[MnN/<:AJUMunI!U0dH[9s[F)>W">>n3`5<1SW1GUmN
+5=\IK?=[kkGBnUcIXcfnHZjUSEH#f6CiF94Ed)_UItEE2MN*RTN/NJ~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -3.315281e-01 CuGS 7.497257e-04 -1.056354e-01 CuDec
+0 1 298 {CuPath} for
+g==?`[B-$kQC"#3W3EtScI:4ga1A78IVD\F0I7ea-8IkfBn;MH[_^&.a2GWsWM5iJPa7Z-USt5rX/2AH
+IVMkL/Kbc=&/ciW;fI_q`S9bTrVQ0Je%r)OLj=&[F*i\.W4C%#hW!MKcG?TPKlgj+9h7fH;-%(;D0'c<
+D.QsL7QiO^0/,@N:L%abMj^?=XfJ@pR?WVbJV/Z7Pb>(ga3`T"iT&_EbegfkUnO?OTrYH3`Quube'Gt=
+U5F%r6nTJh#6=r6'd5=t<+0`mK8GSHNJWLGL4tA?NKfj)V6$o.[(!HOZF$mAZ*^jI\\#Md]=+rCT9b=a
+FDYPs?X[DZEI*.nOd)6#P`^lVIWogPE-6DYN0g?D[_KVo]XFi3Ne)3~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (005 diagram M1)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 64.500 def /len 1.000 def
+50.00 TD (-0.2) 3.00 0 1 50.00 63.90 TP
+81.43 TD (0.2) 3.00 0 1 81.43 63.90 TP
+97.14 TD (0.4) 3.00 0 1 97.14 63.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 65.214 def /len 1.000 def
+85.00 AD 
+(-4.0) 3.00 3 0 64.61 85.00 TP
+75.00 AD (-2.0) 3.00 3 0 64.61 75.00 TP
+55.00 AD (2.0) 3.00 3 0 64.61 55.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+105.00 65.00 50.00 65.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+65.71 90.00 65.71 50.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(M1) 5.00 3 1 105.00 90.00 TP
+gsave
+/f_x 50.00 def /f_y 50.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 1.182224e-01 CuGS 9.381804e-04 -1.111842e-01 CuDec
+0 1 298 {CuPath} for
+84Q3E;I!dRI>O,UTqnEVRZrVXF(eo\;+jPT:fLV.C34`RL5_1SP)k]aN/<=FKnP,1KRn])IXQKeF`MM>
+DJX*'CMR["Bkh9n@q/qS?XI;RD/t)]Q_^t*d,4-[q>U<go]b2W^oX&`G\C,N4>A0)'bLcX"9JW-"Ukt^
+,qqPW>\eP=Od_r=UnXBFN.Q:kAmJP@<E`aADL$elOd_f2SX>RtJp2'D>Zap&;H6n-Ao2[:JqSu=Mi*FK
+Lk^\?Ll.4TQ'e&3SXu=;PDb-CG&1l#?<UH7=^>?DASGmrDJa3,Bkh9oBPD:#FEi:hMj'L!Tr+`dWi2hk
+Tq7X:NJ`C9G]@G0?X-`9<`rX8A8ZF7JVT/CNK&[EG]@8";bKSG6UOH~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 3.744727e-01 CuGS 7.952309e-04 -9.572789e-02 CuDec
+0 1 298 {CuPath} for
+CL^LH9hnD\<F'-LEHHDHFDGGk;+3T(0eP7B7T3rGO/9>,eD9'<f#YCuOaCbC7mB!n5=JO[F+KLEVlHhq
+SrnVC>Y@%-*Z>e4+=oNH?uh-pYe\W?kO%s:qu-HlqYU$YmH33O`3Q.uHY-2?/fkZ4"T\`2%i-<=2*OK&
+;,L7g:.n#C5Wq:q5Y"IH>@hYpIYN`CPa@c*QC!huNf&UDIsQ9XD/!Ti@9m2G?Xm_aEd*"eM3*seR$a2(
+Oc,$JIsQ<]FE2JFG^+UcJ:rT3L5LhGM2dCQNK0$\NfT-XLkUD-H#mq?C1q<qCiFNCJVB&FP*hN%PECfZ
+Isc?WChIBlAnPmrF*2k\KSkbOQ'[r/SXu@BR$a(rLjjSeAR8>27706~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -2.562503e-01 CuGS 6.036570e-04 -6.422158e-02 CuDec
+0 1 298 {CuPath} for
+1HnE7C3YW$UT1W.[C3EFWi)M^R[9;%NJ`=7E+W-B3@l0a#m^eH)(@XGCP/.\_9C?TbIjsCIqDP>/Ku8[
+.QU76I?UbGbgP%e_loS\BM:<+&I/=>$Pk*L93uOcM3+$eP`(?HG]I\9CMIa*F*2PGDJ*6P6oHJ8'G1ll
++YZAkHBYVSi9pI>qsWLdZ^,uG82;G,'bhW72FUb^H\[fQSXl.3M1Khe@U<,8;c6Us>$YKE@q/tX@:<SR
+Anl4-I><oOTV\ZhWMZ8RM10AQ;b/u+.OHA`,:"`i1H.K`84ufZ=Bf0DAo)=*FaA@aJ:iQ3Ll@@WPF7o5
+TqnNZURRU1Jp;!9:II/s.4$;e/291P92f#$@q&qT>ZO]t8k_oW>%DU~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (006 diagram M2)
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/y1 64.500 def /len 1.000 def
+182.00 TD (-0.2) 3.00 0 1 182.00 63.90 TP
+213.43 TD (0.2) 3.00 0 1 213.43 63.90 TP
+229.14 TD (0.4) 3.00 0 1 229.14 63.90 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+2 setlinecap/x1 197.214 def /len 1.000 def
+85.00 AD 
+(-4.0) 3.00 3 0 196.61 85.00 TP
+75.00 AD (-2.0) 3.00 3 0 196.61 75.00 TP
+55.00 AD (2.0) 3.00 3 0 196.61 55.00 TP
+stroke LF
+0.00 0.00 0.00 0 0.200 0 LI
+237.00 65.00 182.00 65.00 LS
+LF
+0.00 0.00 0.00 0 0.200 0 LI
+197.71 90.00 197.71 50.00 LS
+LF
+/CF2 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(M2) 5.00 3 1 237.00 90.00 TP
+gsave
+/f_x 182.00 def /f_y 50.00 def /f_width 55.00 def /f_height 40.00 def
+/f_tmin -2.000000e-01 def /f_tmax 5.000000e-01 def /f_ymin 3.000000e+00 def /f_ymax -5.000000e+00 def
+InitFieldGS
+ClipFieldGS
+0.00 0.00 1.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 1.337887e-01 CuGS 6.315119e-04 -1.017725e-01 CuDec
+0 1 298 {CuPath} for
+[^3$/Q]-N@Ec5l<H\[cYYJ&!'daQCX[\o@DEbATX<E`jOJWm%DbLtk;k2Ot9];qE[Is5pQFaJk+SZK35
+_oBX1[]Z<jN.QJ'H%(I.S#a'>eD]]aq"t!gr;6Efqtg0eqYKmRjkIneU5a2!755hq"p4l2%iZrZ8R-%V
+KohUlTr"ZfXKf.D^Ve.:cHa_U_RZbAPD4@%AR]"RASQC=NLH`N]>_k;c-X\Va2>^+]Xtbf]"P\f\[JlJ
+WhZ2QP`:WXLPL\CMN3a\Od)&nPEM)mP*_N,Tr5$"\A,o$aiVZG`PfR,]Xtef]tV;"_T'L1^U^\PUR[O,
+Kn4]$IXm--O->s"S=Q+:P)tKRIscWjJ;&lGSZ&d&^VRh']X4Z1ObS,~>
+CuStroke pop
+grestore
+LF
+1.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 3.511908e-01 CuGS 5.670278e-04 -9.169854e-02 CuDec
+0 1 298 {CuPath} for
+@9m,A?t="nI"RHES"QIMT:_I7NeW4;I"-^#N0Bd0Z+.]nc-ak_aMG?gTU(C_FD>Ap?X7/SDK^VhQ_1=a
+]"Q#"`5B@(\@JuS[(*ccajSr*lh1)OrVQ?WkhOY-^U18IXK/V5]>2A+aMY`sU60b59fOC4#Qk)6'.,e@
+DN1O-eDp&jp@.;"c+C*IOFhn(F`VeTJ;/o@OHGWaMhH_0HZjRUH$k1!Ng?00W3!/+Ycb(,US46FQ][Gk
+OcGTgQ("2:V6$l1]>Ve:e(NO6iSi_Og=Ocqa1o6nZ)jt'Vl-DkWN3/)Yd(O?['I!@YH=b%US43FQ'%)a
+LPLS<L5LqQQCFVIXKf.A\$i]KXf.q_Q][8dLl74OPF%c5V5p]%YHb5~>
+CuStroke pop
+grestore
+LF
+0.00 0.00 0.00 0 0.500 1 LI
+gsave
+2.000000e-03 -1.000000e-01 -2.174021e-01 CuGS 4.483818e-04 -6.217749e-02 CuDec
+0 1 298 {CuPath} for
+qYKdDd^l66G\UMh?"eD>Tsi5%lgaE*e\Ir8AkFZq%L3@T-TtRVPI&Bgm.U,ElJBk&Yb[\MN/`g[QC+88
+Ssbe!Irf.(9h%<.3^#f#;-IIGFaSh"OdViBZbX`;j7)d@rV5m?bd<a`?9ftS#lt/<)DXlqI[R7L`5TO!
+U5jG*9fk-`0g89CI@IUhj6ug=oAe91Tnm\o:IRZB;djj-U:/7ujQu7!inM_r\#lR$T:_gTXKo7H]=kb_
+Y,.VLLO4#U?s?T+8ju$-2DQm5-mU2h0fDBq?#4tJS#*C!]tM(i['$C(SXc+;R\6CRWj&b6ZEC7*SXGRt
+KReJtH[L0hIslclG&_;,>ujft:/FqtBm>;sUp@VO`lGp*Wgeif@o5V~>
+CuStroke pop
+grestore
+LF
+grestore
+%%EndObject
+%%BeginObject: (007 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(Legend:) 3.00 4 2 200.00 180.00 TP
+%%EndObject
+%%BeginObject: (008 line)
+0.00 0.00 1.00 0 0.500 1 LI
+205.00 177.00 200.00 177.00 LS
+LF
+%%EndObject
+%%BeginObject: (009 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(CLOSEINCc (n=25)) 3.00 4 2 206.50 175.80 TP
+%%EndObject
+%%BeginObject: (010 line)
+1.00 0.00 0.00 0 0.500 1 LI
+205.00 172.80 200.00 172.80 LS
+LF
+%%EndObject
+%%BeginObject: (011 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(FARINCc (n=25)) 3.00 4 2 206.50 171.60 TP
+%%EndObject
+%%BeginObject: (012 line)
+0.00 0.00 0.00 0 0.500 1 LI
+205.00 168.60 200.00 168.60 LS
+LF
+%%EndObject
+%%BeginObject: (013 text)
+/CF3 findfont setfont
+0.00 0.00 0.00 rgb2cmyk
+(GAVR CLOSEINCc - GAVR FARINCc) 3.00 4 2 206.50 167.40 TP
+%%EndObject
+
+% -------------------------------------------------------------------
+% cleanup
+
+%%Trailer
+end 
+showpage
+%%EOF
