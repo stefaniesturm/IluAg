@@ -118,8 +118,8 @@ data <- P3b
 
 # Summary statistics
 summary <- data %>%
-  group_by(subject, proximity, congruency) %>%
-  get_summary_stats(mean, type = "mean")
+  group_by(proximity, congruency) %>%
+  get_summary_stats(mean, type = "mean_se")
 
 # Run ANOVA
 data <- ungroup(data) # Ungroup so that aov can work# Run AOV
@@ -131,8 +131,25 @@ anova = ezANOVA(
   , within = .(proximity, congruency)
 )
 
-library(ggplot2)
+# Plot interaction of proximity and congruency in P3b
 
-ggplot(P3a, aes(x=subject, y=mean)) +
-  geom_point() +
-  geom_smooth(method=lm, se=FALSE)
+ggplot(summary, aes(y=mean, x=proximity, fill = congruency)) + 
+  geom_bar(position="dodge", stat="identity") +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.2,
+                position=position_dodge(.9)) + 
+  scale_x_discrete(name = "Distance between BP and sound", labels=c("more than 60ms", "less than 60ms")) + 
+  scale_y_continuous((name = "Mean amplitude of P3b")) +
+  scale_fill_discrete(name = "Congruency", labels=c("incongruent", "congruent")) + 
+  theme_bw()
+
+# Summary statistics
+summary <- data %>%
+  group_by(subject, proximity, congruency) %>%
+  get_summary_stats(mean, type = "mean")
+
+pwc <- summary %>%
+  group_by(congruency) %>%
+  pairwise_t_test(
+    mean ~ proximity, paired = TRUE,
+    p.adjust.method = "bonferroni"
+  )
