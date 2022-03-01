@@ -4,7 +4,8 @@ library(dplyr)
 library(rstatix)
 library(ez)
 
-df <- read.csv("D:/IluAg/IluAg/means/proximity-congruency.txt", row.names=NULL, sep="")
+# df <- read.csv("D:/IluAg/IluAg/means/proximity-congruency.txt", row.names=NULL, sep="")
+df <- read.csv("~/Uni/IluAg/means/proximity-congruency.txt", row.names=NULL, sep="")
 
 # Rename the columns
 names <- c("experiment", "condition", "channel", "window", "mean", "subject")
@@ -54,13 +55,20 @@ df$congruency <- as.factor(df$congruency)
 df$mean <- as.numeric(df$mean)
 
 # Run four ANOVAs for the different components of interest
-N1 <- subset(df, channel == "Fz" & window == "N1") 
-P2<- subset(df, channel == "Fz" & window == "P2")
-P3a <- subset(df, channel == "Fz" & window == "P3")
+N1_Fz <- subset(df, channel == "Fz" & window == "N1") 
+N1_Cz <- subset(df, channel == "Cz" & window == "N1") 
+
+P2_Fz<- subset(df, channel == "Fz" & window == "P2")
+P2_Cz<- subset(df, channel == "Cz" & window == "P2")
+
+
+P3a_Fz <- subset(df, channel == "Fz" & window == "P3")
+P3a_Cz <- subset(df, channel == "Cz" & window == "P3")
+
 P3b <- subset(df, channel == "Pz" & window == "P3")
 
 # N1 
-data <- N1
+data <- N1_Cz
 
 # Summary statistics
 summary <- data %>%
@@ -78,7 +86,7 @@ anova = ezANOVA(
 )
 
 # P2 
-data <- P2
+data <- P2_Cz
 
 # Summary statistics
 summary <- data %>%
@@ -96,7 +104,7 @@ anova = ezANOVA(
 )
 
 # P3a
-data <- P3a
+data <- P3a_Cz
 
 # Summary statistics
 summary <- data %>%
